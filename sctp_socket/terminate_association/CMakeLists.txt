@@ -1,12 +1,12 @@
 project(sctp)
+cmake_minimum_required(VERSION 3.5)
 
 set(CMAKE_CXX_STANDARD 14)
+
+find_package (Threads)
 
 add_executable(client SctpClientMain.cpp SctpClientEndpoint.cpp SctpNotification.cpp)
 target_link_libraries (client sctp)
 
-#add_executable(clientc sctpclnt.c)
-#target_link_libraries (clientc sctp)
-
 add_executable(server SctpServerMain.cpp SctpServerEndpoint.cpp SctpNotification.cpp)
-target_link_libraries (server sctp)
+target_link_libraries (server sctp ${CMAKE_THREAD_LIBS_INIT})

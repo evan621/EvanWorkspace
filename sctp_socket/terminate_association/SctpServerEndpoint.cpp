@@ -10,7 +10,7 @@
 #include <errno.h>
 #include <string.h>
 #include <poll.h>
-
+#include <pthread.h>
 
 
 SctpServerEndpoint::SctpServerEndpoint(std::string localIp, std::uint32_t port)
@@ -20,16 +20,24 @@ SctpServerEndpoint::SctpServerEndpoint(std::string localIp, std::uint32_t port)
 	CreateSocket();
 	SetSocketOpt();
 	Bind(localIp, port);
+	
+	// create new thread for the polling of received messages
+	int res = pthread_create(&m_pid, NULL, thread_func, (void *)this);
+}
+
+void* SctpServerEndpoint::thread_func(void *arg)
+{
+	std::cout << "thread running!" << std::endl;
 }
 
 SctpServerEndpoint::~SctpServerEndpoint()
 {
 	// close socket;
 	close(sock_fd);
-
+	
+	//pthread_cancel(m_thread);
 	std::cout << "[Server]: Close Socket!" << std::endl;
 }
-
 
 void SctpServerEndpoint::CreateSocket()
 {
@@ -39,8 +47,6 @@ void SctpServerEndpoint::CreateSocket()
 		std::cout << "[Server]: Created Socket failed with errono: " << strerror(errno) << std::endl;
 	}
 }
-
-
 
 void SctpServerEndpoint::Bind(std::string localIp, uint32_t port)
 {
@@ -64,7 +70,6 @@ void SctpServerEndpoint::Bind(std::string localIp, uint32_t port)
 		std::cout << "[Server]: listen failed with errorno: " << strerror(errno) << std::endl;
 	}
 }
-
 
 void SctpServerEndpoint::SetSocketOpt()
 {
@@ -140,7 +145,7 @@ int SctpServerEndpoint::StartPoolForMsg(int timeout)
 	
 	while(1)
 	{
-		switch(poll(&fdtable, 1, timeout)){
+		switch(poll(&fdtable, 1, -1)){
 		case -1:
 			std::cout << "[Server]: Error detected for poll: " << strerror(errno) << std::endl;
 			break;

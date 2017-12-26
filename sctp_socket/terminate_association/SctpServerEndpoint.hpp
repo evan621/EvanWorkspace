@@ -18,7 +18,9 @@ private:
 	void CreateSocket();
 	void Bind(std::string localIp, uint32_t port);
 	int SctpMsgHandler(int sock_fd);
-	
+	static void* thread_func(void *arg);
+
 	int sock_fd{-1};
+	pthread_t m_pid;
 	SctpNotification notification;
 };
