@@ -12,7 +12,7 @@ int main()
 	
 	endpoint->SendMsg();	
 	
-	if (-1 == endpoint->StartPoolForMsg(TIME_OUT))
+	if (-1 == endpoint->StartPoolForMsg())
 	{
 		std::cout << "Nothing polled" << std::endl;
 	}

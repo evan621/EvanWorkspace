@@ -150,7 +150,7 @@ void SctpClientEndpoint::RegisterMsgHandler()
 	return;
 }
 
-int SctpClientEndpoint::StartPoolForMsg(int timeout)
+int SctpClientEndpoint::StartPoolForMsg()
 {
 	pollfd fdtable; 
 	
@@ -161,7 +161,7 @@ int SctpClientEndpoint::StartPoolForMsg(int timeout)
 	
 	while(1)
 	{
-		switch(poll(&fdtable, 1, timeout)){
+		switch(poll(&fdtable, 1, TIME_OUT)){
 		case -1:
 			std::cout << "[Client]: Error detected for poll: " << strerror(errno) << std::endl;
 			break;

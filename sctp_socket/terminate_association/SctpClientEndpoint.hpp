@@ -12,7 +12,7 @@ public:
 	
 	void SendMsg() override;
 	void RegisterMsgHandler() override;
-	int StartPoolForMsg(int timeout);
+	int StartPoolForMsg();
 
 private:
 	void SetSocketOpt();
