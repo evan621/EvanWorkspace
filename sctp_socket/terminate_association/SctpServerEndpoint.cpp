@@ -2,11 +2,6 @@
 #include <unistd.h>
 #include "SctpServerEndpoint.hpp"
 #include <iostream>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <netinet/sctp.h>
-#include <arpa/inet.h>
 #include <errno.h>
 #include <string.h>
 #include <poll.h>
@@ -26,15 +21,11 @@ SctpServerEndpoint::SctpServerEndpoint(std::string localIp, std::uint32_t port):
 
 SctpServerEndpoint::~SctpServerEndpoint()
 {	
-	std::cout << "[Server]: Destructor called!" << std::endl;
+	std::cout << "[Server]: SctpServerEndpoint destructor called!" << std::endl;
 	
 	continuepoll = false;
 
 	pollThread.join();
-	
-	std::cout << "[Server]: Close Socket!" << std::endl;
-
-	// close socket;
 	close(sock_fd);
 }
 
@@ -94,6 +85,25 @@ void SctpServerEndpoint::SetSocketOpt()
 	}
 }
 
+int SctpServerEndpoint::handleSctpNotification(std::unque_ptr<SctpMessageEnvelope> msg)
+{
+	std::cout << "[Poll Thread]: Notification received" << std::endl;
+
+	notification.Print(msg->getPayload());
+	return 0;
+}
+
+int SctpServerEndpoint::handleSctpMessage(std::unque_ptr<SctpMessageEnvelope> msg)
+{
+	std::cout << "[Poll Thread]: SCTP message received: " << msg->getPayload() << std::endl;
+		
+	std::cout << "[sock add]: sa address: " << msg->peerIp() << std::endl;
+	std::cout << "[sock add]: sa port: " << msg->peerPort() << std::endl;
+	
+	std::cout << "[snd rcv info]: assoid = " << msg->getAssocId() << std::endl;
+	return 0;
+}
+
 int SctpServerEndpoint::SctpMsgHandler(int sock_fd)
 {
 	int msg_flags;
@@ -105,30 +115,24 @@ int SctpServerEndpoint::SctpMsgHandler(int sock_fd)
 	socklen_t len;
 	
 	len = sizeof(struct sockaddr_in);
-	rd_sz = sctp_recvmsg(sock_fd, readbuf, sizeof(readbuf),
-						 (struct sockaddr *)&cliaddr, &len, &sri, &msg_flags);
-	if(rd_sz == -1)
+	if(-1 == sctp_recvmsg(sock_fd, readbuf, sizeof(readbuf),
+						 (struct sockaddr *)&cliaddr, &len, &sri, &msg_flags))
 	{		
 		std::cout << "[Poll Thread]: Error when sctp_recvmsg: " << strerror(errno) << std::endl;
 		return -1;
 	}
+	
+	std::unque_ptr<SctpMessageEnvelope> msg(readbuf, &cliaddr, &sri);
 		
 	if(msg_flags&MSG_NOTIFICATION) 
 	{
-		std::cout << "[Poll Thread]: Notification received" << std::endl;
-
-		notification.Print(readbuf);
-		return 0;
+		return handleSctpNotification(msg);
+	}
+	else
+	{
+		return handleSctpMessage(msg);
 	}
 	
-	std::cout << "[Poll Thread]: SCTP message(size = " << rd_sz << " ) received: " << readbuf << std::endl;
-	/*
-	sctp_sendmsg(sock_fd, readbuf, rd_sz, 
-				(sockaddr *) &cliaddr, len, 
-				sri.sinfo_ppid, (sri.sinfo_flags), sri.sinfo_stream,    //SCTP_EOF
-				0, 0);
-	*/			
-	std::cout << "[Poll Thread]: Send echo!" << std::endl;
 		
 	return 0;
 }
@@ -173,6 +177,13 @@ int SctpServerEndpoint::StartPoolForMsg()
 
 void SctpServerEndpoint::SendMsg()
 {
+	/*
+	sctp_sendmsg(sock_fd, readbuf, rd_sz, 
+				(sockaddr *) &cliaddr, len, 
+				sri.sinfo_ppid, (sri.sinfo_flags), sri.sinfo_stream,    //SCTP_EOF
+				0, 0);
+	std::cout << "[Poll Thread]: Send echo!" << std::endl;
+	*/
 }
 
 void SctpServerEndpoint::RegisterMsgHandler()

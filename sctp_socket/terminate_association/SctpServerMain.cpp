@@ -26,6 +26,7 @@ int main()
 			break;
 		case 1:
 			std::cout << "Send message to client" << std::endl;
+			endpoint->SendMsg();
 			break;
 		default:
 			break;
