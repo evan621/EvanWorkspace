@@ -23,4 +23,5 @@ private:
 	int sock_fd{-1};
 	std::thread pollThread;
 	SctpNotification notification;
+	bool continuepoll;
 };

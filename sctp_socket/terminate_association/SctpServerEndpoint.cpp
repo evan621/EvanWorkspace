@@ -12,7 +12,7 @@
 #include <poll.h>
 
 
-SctpServerEndpoint::SctpServerEndpoint(std::string localIp, std::uint32_t port)
+SctpServerEndpoint::SctpServerEndpoint(std::string localIp, std::uint32_t port): continuepoll(true)
 {
 	std::cout << "[Server]: Create socket and bind to: " << localIp << ":" << port << std::endl;
 
@@ -25,13 +25,17 @@ SctpServerEndpoint::SctpServerEndpoint(std::string localIp, std::uint32_t port)
 }
 
 SctpServerEndpoint::~SctpServerEndpoint()
-{
-	// close socket;
-	close(sock_fd);
+{	
+	std::cout << "[Server]: Destructor called!" << std::endl;
 	
+	continuepoll = false;
+
 	pollThread.join();
 	
 	std::cout << "[Server]: Close Socket!" << std::endl;
+
+	// close socket;
+	close(sock_fd);
 }
 
 void SctpServerEndpoint::CreateSocket()
@@ -105,26 +109,26 @@ int SctpServerEndpoint::SctpMsgHandler(int sock_fd)
 						 (struct sockaddr *)&cliaddr, &len, &sri, &msg_flags);
 	if(rd_sz == -1)
 	{		
-		std::cout << "[Server]: Error when sctp_recvmsg: " << strerror(errno) << std::endl;
+		std::cout << "[Poll Thread]: Error when sctp_recvmsg: " << strerror(errno) << std::endl;
 		return -1;
 	}
 		
 	if(msg_flags&MSG_NOTIFICATION) 
 	{
-		std::cout << "[Server]: Notification received" << std::endl;
+		std::cout << "[Poll Thread]: Notification received" << std::endl;
 
 		notification.Print(readbuf);
 		return 0;
 	}
 	
-	std::cout << "[Server]: SCTP message(size = " << rd_sz << " ) received: " << readbuf << std::endl;
-	
+	std::cout << "[Poll Thread]: SCTP message(size = " << rd_sz << " ) received: " << readbuf << std::endl;
+	/*
 	sctp_sendmsg(sock_fd, readbuf, rd_sz, 
 				(sockaddr *) &cliaddr, len, 
-				sri.sinfo_ppid, (sri.sinfo_flags), sri.sinfo_stream,    /*SCTP_EOF*/
+				sri.sinfo_ppid, (sri.sinfo_flags), sri.sinfo_stream,    //SCTP_EOF
 				0, 0);
-				
-	std::cout << "[Server]: Send echo!" << std::endl;
+	*/			
+	std::cout << "[Poll Thread]: Send echo!" << std::endl;
 		
 	return 0;
 }
@@ -136,17 +140,17 @@ int SctpServerEndpoint::StartPoolForMsg()
 	fdtable.fd = sock_fd;
 	fdtable.events = POLLIN;
 	
-	std::cout << "[Server]: Waiting for new messages!" << std::endl;
+	std::cout << "[Poll Thread]: Waiting for new messages!" << std::endl;
 	
-	while(1)
+	while(continuepoll)
 	{
-		switch(poll(&fdtable, 1, TIME_OUT)){
+		switch(poll(&fdtable, 1, 1000)){
 		case -1:
-			std::cout << "[Server]: Error detected for poll: " << strerror(errno) << std::endl;
+			std::cout << "[Poll Thread]: Error detected for poll: " << strerror(errno) << std::endl;
 			break;
 		case 0:
-			std::cout << "[Server]: Time out for poll " << std::endl;
-			return 0;
+			//std::cout << "[Poll Thread]: Time out for poll " << std::endl;
+			//return 0;
 			break;
 		default:
 			if(fdtable.revents & POLLIN)
@@ -156,10 +160,14 @@ int SctpServerEndpoint::StartPoolForMsg()
 					return -1;
 				}
 			}
+			else
+			{
+				std::cout << "[Poll Thread]: Exception during poll, revents = " << std::hex << fdtable.revents << std::endl;
+			}
 			break;
 		}
 	}
-	
+
 	return 0;
 }
 
