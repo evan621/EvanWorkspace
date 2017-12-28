@@ -1,13 +1,14 @@
 #include "SctpEndpoint.hpp"
 #include "SctpNotification.hpp"
+#include "SctpSocketOperation.hpp"
 #include <string>
 #include <stdint.h>
 #include <thread>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <netinet/sctp.h>
-#include <arpa/inet.h>
+#include <memory>
+#include "SctpMessage.hpp"
+#include <unistd.h>
+
+
 
 class SctpServerEndpoint: public SctpEndpoint
 {
@@ -16,19 +17,15 @@ public:
 	~SctpServerEndpoint();
 	
 	void SendMsg() override;
-	void RegisterMsgHandler() override;
-	int StartPoolForMsg() override;
-
 private:
-	void SetSocketOpt();
-	void CreateSocket();
-	void Bind(std::string localIp, uint32_t port);
-	int SctpMsgHandler(int sock_fd);
-	int handleSctpNotification(char *readbuf);
-	int handleSctpMessage(char *readbuf, sockaddr_in *clientaddr, sctp_sndrcvinfo *sri);
+    int onSctpNotification(std::unique_ptr<SctpMessageEnvelope> msg);
+	int onSctpMessages(std::unique_ptr<SctpMessageEnvelope> msg);
+	void ThreadHandler();
 
-
-	int sock_fd{-1};
+	
+	//int sock_fd{-1};
+	std::unique_ptr<SctpSocketOperation> sock_op;
+	
 	std::thread pollThread;
 	SctpNotification notification;
 	bool continuepoll;

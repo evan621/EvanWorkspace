@@ -10,101 +10,58 @@
 #include <errno.h>
 #include <string.h>
 #include <poll.h>
+#include <functional>
+#include "SctpSocketOperation.hpp"
 
 
 //#define ENABLE_ALL_NOTIFICATION
 
-SctpClientEndpoint::SctpClientEndpoint()
+SctpClientEndpoint::SctpClientEndpoint(): continuepoll(true)
 {
 	std::cout << "[Client]: Create new socket: SEQPACKET " << std::endl;
 
-	CreateSocket();
-	SetSocketOpt();
+	sock_op = std::make_unique<SctpSocketOperation>();
+	sock_op->SetSocketOpt();
+	
+	// register for callback
+	sock_op->registerNotificationCb(std::bind(&SctpClientEndpoint::onSctpNotification, this, std::placeholders::_1));
+	sock_op->registerMessageCb(std::bind(&SctpClientEndpoint::onSctpMessages, this, std::placeholders::_1));
+	
+	pollThread = std::thread(&SctpClientEndpoint::ThreadHandler, this);
 }
 
 SctpClientEndpoint::~SctpClientEndpoint()
 {
 	// close socket;
-	close(sock_fd);
-
+	continuepoll = false;
 	std::cout << "[Client]: Close Socket!" << std::endl;
 }
 
-void SctpClientEndpoint::SetSocketOpt()
+void SctpClientEndpoint::ThreadHandler()
 {
-	sctp_initmsg initmsg;
-	sctp_event_subscribe evnts;  
-	
-    /* Specify that a maximum of 5 streams will be available per socket */
-    memset( &initmsg, 0, sizeof(initmsg) );
-    initmsg.sinit_num_ostreams = 5;
-    initmsg.sinit_max_instreams = 5;
-    initmsg.sinit_max_attempts = 4;
-    if(0 != setsockopt( sock_fd, IPPROTO_SCTP, SCTP_INITMSG,
-                     &initmsg, sizeof(initmsg) ))
-    {
-      std::cout << "[Client]: error setsocketopt IPPROTO_SCTP: " << strerror(errno) << std::endl;
-      return;
-    }
-	
-    bzero(&evnts, sizeof(evnts));
-	evnts.sctp_data_io_event = 1;
-	evnts.sctp_association_event = 1;
-	
-#ifdef ENABLE_ALL_NOTIFICATION
-	evnts.sctp_address_event = 1;
-	evnts.sctp_send_failure_event = 1;
-	evnts.sctp_peer_error_event = 1;
-	evnts.sctp_shutdown_event = 1;
-	evnts.sctp_partial_delivery_event = 1;
-	evnts.sctp_adaptation_layer_event = 1;
-	evnts.sctp_sender_dry_event = 1;
-#endif
-	
-	if(0 != setsockopt(sock_fd, IPPROTO_SCTP, SCTP_EVENTS, &evnts, sizeof(evnts)))
+	while(continuepoll)
 	{
-		std::cout << "[Client]: Error setsockopt(IPPROTO_SCTP): " << strerror(errno) << std::endl;
+		sock_op->StartPoolForMsg();
 	}
 }
 
 
-void SctpClientEndpoint::CreateSocket()
+int SctpClientEndpoint::onSctpNotification(std::unique_ptr<SctpMessageEnvelope> msg)
 {
-	sock_fd = socket( AF_INET, SOCK_SEQPACKET, IPPROTO_SCTP );
-	
-	if(sock_fd < 0){
-		std::cout << "[Client]: Created Socket failed with errono: " << strerror(errno) << std::endl;
-	}
+	std::cout << "[Poll Thread]: Notification received" << std::endl;
+
+	notification.Print(msg->getPayload());
+	return 0;
 }
 
-int SctpClientEndpoint::SctpMsgHandler(int sock_fd)
+int SctpClientEndpoint::onSctpMessages(std::unique_ptr<SctpMessageEnvelope> msg)
 {
-	int msg_flags;
-	size_t rd_sz;
-
-	char readbuf[MAX_BUFFER+1];
-	sockaddr_in cliaddr;
-	sctp_sndrcvinfo sri;
-	socklen_t len;
-	
-	len = sizeof(struct sockaddr_in);
-	rd_sz = sctp_recvmsg(sock_fd, readbuf, sizeof(readbuf),
-						 (struct sockaddr *)&cliaddr, &len, &sri, &msg_flags);
-	if(rd_sz == -1)
-	{		
-		std::cout << "[Client]: Error when sctp_recvmsg: " << strerror(errno) << std::endl;
-		return -1;
-	}
+	std::cout << "[Poll Thread]: SCTP message received: " << msg->getPayload() << std::endl;
 		
-	if(msg_flags&MSG_NOTIFICATION) 
-	{
-		std::cout << "[Client]: Notification received" << std::endl;
-
-		notification.Print(readbuf);
-		return 0;
-	}
+	std::cout << "[sock add]: sa address: " << msg->peerIp() << std::endl;
+	std::cout << "[sock add]: sa port: " << msg->peerPort() << std::endl;
 	
-	std::cout << "[Client]: SCTP message(size = " << rd_sz << " ) received: " << readbuf << std::endl;
+	std::cout << "[snd rcv info]: assoid = " << msg->getAssocId() << std::endl;
 	return 0;
 }
 
@@ -125,61 +82,11 @@ void SctpClientEndpoint::SendMsg()
 	std::cin >> message ;
 
 	int stream = 1;
-	sctp_sendmsg(sock_fd, message, 20, 
+	sctp_sendmsg(sock_op->socket_fd(), message, 20, 
 				(sockaddr *)&servaddr, sizeof(servaddr), 0, 0, stream, 0, 0);
-				
-	usleep(3000000);
-	
-	std::cout << "Send abort" << std::endl;
-	
+	/*	
 	sctp_sendmsg(sock_fd, message, 20, 
 				(sockaddr *)&servaddr, sizeof(servaddr), 0, SCTP_ABORT, stream, 0, 0);
 				
-	std::cout << "wait for 3 s" << std::endl;
-
-	usleep(3000000);
-}
-
-void SctpClientEndpoint::SendAbort()
-{
-
-}
-
-void SctpClientEndpoint::RegisterMsgHandler()
-{
-	return;
-}
-
-int SctpClientEndpoint::StartPoolForMsg()
-{
-	pollfd fdtable; 
-	
-	fdtable.fd = sock_fd;
-	fdtable.events = POLLIN;
-	
-	std::cout << "[Client]: Waiting for new messages!" << std::endl;
-	
-	while(1)
-	{
-		switch(poll(&fdtable, 1, TIME_OUT)){
-		case -1:
-			std::cout << "[Client]: Error detected for poll: " << strerror(errno) << std::endl;
-			break;
-		case 0:
-			std::cout << "[Client]: Time out for poll " << std::endl;
-			return 0;
-			break;
-		default:
-			if(fdtable.revents & POLLIN)
-			{
-				if(-1 == SctpMsgHandler(fdtable.fd))
-				{
-					return -1;
-				}
-			}
-			break;
-		}
-	}
-	
-	return 0;
+	*/
 }

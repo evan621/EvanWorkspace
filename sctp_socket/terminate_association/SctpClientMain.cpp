@@ -11,9 +11,4 @@ int main()
 	endpoint = std::make_unique<SctpClientEndpoint>();
 	
 	endpoint->SendMsg();	
-	
-	if (-1 == endpoint->StartPoolForMsg())
-	{
-		std::cout << "Nothing polled" << std::endl;
-	}
 }

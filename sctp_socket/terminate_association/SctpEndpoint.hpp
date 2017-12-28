@@ -1,9 +1,10 @@
-
+#ifndef _SCTP_ENDPOINT
+#define _SCTP_ENDPOINT
 class SctpEndpoint
 {
 public:
 	virtual ~SctpEndpoint() = default;
 	virtual void SendMsg() = 0;
-	virtual void RegisterMsgHandler() = 0;
-	virtual int StartPoolForMsg() = 0;
 };
+
+#endif

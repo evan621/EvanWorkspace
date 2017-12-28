@@ -8,7 +8,7 @@
 
 class SctpNotification{
 public:
-	void Print(char* notify_buf);
+	void Print(const char* notify_buf);
 	SctpNotification(){}
 	~SctpNotification(){}
 	

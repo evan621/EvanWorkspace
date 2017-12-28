@@ -138,7 +138,7 @@ void SctpNotification::PrintSenderDryEvent(union sctp_notification *notification
 	std::cout << "[Notification]: SCTP_SENDER_DRY_EVENT: assoc id = " << sctpSenderDryEvent->sender_dry_assoc_id << std::endl;
 }
 
-void SctpNotification::Print(char* notify_buf)
+void SctpNotification::Print(const char* notify_buf)
 {
 	sctp_notification *notification;
 	
