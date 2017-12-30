@@ -5,7 +5,6 @@ set(CMAKE_CXX_STANDARD 14)
 
 find_package (Threads)
 
-MESSAGE(STATUS "CMAKE_THREAD_LIBS_INIT: ${CMAKE_THREAD_LIBS_INIT}")
 
 add_executable(client SctpClientMain.cpp SctpClientEndpoint.cpp SctpNotification.cpp SctpSocketOperation.cpp)
 target_link_libraries (client sctp ${CMAKE_THREAD_LIBS_INIT})

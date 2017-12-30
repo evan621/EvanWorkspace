@@ -89,7 +89,7 @@ int SctpSocketOperation::StartPoolForMsg()
 	fdtable.fd = sock_fd;
 	fdtable.events = POLLIN;
 	
-	std::cout << "[Poll Thread]: Waiting for new messages!" << std::endl;
+	//std::cout << "[Poll Thread]: Waiting for new messages!" << std::endl;
 	
 	switch(poll(&fdtable, 1, 1000)){
 	case -1:

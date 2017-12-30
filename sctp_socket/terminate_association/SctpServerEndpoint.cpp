@@ -14,8 +14,10 @@ SctpServerEndpoint::SctpServerEndpoint(std::string localIp, std::uint32_t port):
 	sock_op->Bind(localIp, port);
 	
 	// register for callback
-	sock_op->registerNotificationCb(std::bind(&SctpServerEndpoint::onSctpNotification, this, std::placeholders::_1));
-	sock_op->registerMessageCb(std::bind(&SctpServerEndpoint::onSctpMessages, this, std::placeholders::_1));
+	sock_op->registerNotificationCb([this](std::unique_ptr<SctpMessageEnvelope> msg)
+				{return onSctpNotification(std::move(msg));} );
+	sock_op->registerMessageCb([this](std::unique_ptr<SctpMessageEnvelope> msg)
+				{return onSctpMessages(std::move(msg));} );
 	
 	// create new thread for the polling of received messages
 	pollThread = std::thread(&SctpServerEndpoint::ThreadHandler, this);

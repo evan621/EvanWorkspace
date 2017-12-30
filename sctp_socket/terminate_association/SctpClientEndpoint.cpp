@@ -24,8 +24,10 @@ SctpClientEndpoint::SctpClientEndpoint(): continuepoll(true)
 	sock_op->SetSocketOpt();
 	
 	// register for callback
-	sock_op->registerNotificationCb(std::bind(&SctpClientEndpoint::onSctpNotification, this, std::placeholders::_1));
-	sock_op->registerMessageCb(std::bind(&SctpClientEndpoint::onSctpMessages, this, std::placeholders::_1));
+	sock_op->registerNotificationCb([this](std::unique_ptr<SctpMessageEnvelope> msg) 
+			{return SctpClientEndpoint::onSctpNotification(std::move(msg));});
+	sock_op->registerNotificationCb([this](std::unique_ptr<SctpMessageEnvelope> msg) 
+			{return SctpClientEndpoint::onSctpMessages(std::move(msg));});
 	
 	pollThread = std::thread(&SctpClientEndpoint::ThreadHandler, this);
 }
@@ -34,6 +36,8 @@ SctpClientEndpoint::~SctpClientEndpoint()
 {
 	// close socket;
 	continuepoll = false;
+	
+	pollThread.join();
 	std::cout << "[Client]: Close Socket!" << std::endl;
 }
 

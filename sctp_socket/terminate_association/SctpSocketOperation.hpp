@@ -17,10 +17,7 @@
 #include "SctpMessage.hpp"
 #include "SctpEndpoint.hpp"
 
-//typedef int (*NotificationCallback)(std::unique_ptr<SctpMessageEnvelope> msg);
-//typedef int (*MessageCallback)(std::unique_ptr<SctpMessageEnvelope> msg);
 typedef std::function<int(std::unique_ptr<SctpMessageEnvelope> msg)> Callback;
-
 
 class SctpSocketOperation{
 public:
@@ -29,8 +26,8 @@ public:
 	void SetSocketOpt();
 	void Bind(std::string localIp, uint32_t port);
 	auto socket_fd() { return sock_fd; }
-	void registerNotificationCb(Callback func) { onNotificaiton = func;}
-	void registerMessageCb(Callback func) { onMessage = func; } 
+	void registerNotificationCb(Callback func) { onNotificaiton = std::move(func);}
+	void registerMessageCb(Callback func) { onMessage = std::move(func); } 
 	int StartPoolForMsg();
 	int SctpMsgHandler(int sock_fd);
 
@@ -39,8 +36,6 @@ private:
 	Callback onNotificaiton;
 	Callback onMessage;
 };
-
-
 
 
 #endif
