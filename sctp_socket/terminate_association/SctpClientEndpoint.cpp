@@ -54,7 +54,7 @@ int SctpClientEndpoint::onSctpNotification(std::unique_ptr<SctpMessageEnvelope> 
 {
 	std::cout << "[Poll Thread]: Notification received" << std::endl;
 
-	notification.Print(msg->getPayload());
+	notification.Print(msg->getPayload()->c_str());
 	return 0;
 }
 
@@ -65,7 +65,7 @@ int SctpClientEndpoint::onSctpMessages(std::unique_ptr<SctpMessageEnvelope> msg)
 	std::cout << "[sock add]: sa address: " << msg->peerIp() << std::endl;
 	std::cout << "[sock add]: sa port: " << msg->peerPort() << std::endl;
 	
-	std::cout << "[snd rcv info]: assoid = " << msg->getAssocId() << std::endl;
+	std::cout << "[snd rcv info]: assoid = " << msg->associcationId() << std::endl;
 	return 0;
 }
 

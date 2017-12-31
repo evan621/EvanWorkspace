@@ -11,7 +11,7 @@ class SctpMessageEnvelope{
 public:
 	SctpMessageEnvelope(char* readbuf, sockaddr_in* clientAddr, sctp_sndrcvinfo* sendRecvInfo)
 	{
-		payload = std::make_unique<std::string>(readbuf);
+		payload = std::make_shared<std::string>(readbuf);
 		
 		if(clientAddr->sin_family != AF_INET)
 		{
@@ -21,23 +21,26 @@ public:
 		char ip[20];
 		inet_ntop(clientAddr->sin_family, &(clientAddr->sin_addr), ip, 20);
 		
-		ipaddr 	 = std::make_unique<std::string>(ip);
-		port = clientAddr->sin_port;
+		ipaddr 	 = std::make_shared<std::string>(ip);
+		port = ntohs(clientAddr->sin_port);
 		
 		asso_id = sendRecvInfo->sinfo_assoc_id;
 		
+		stream = sendRecvInfo->sinfo_stream;
 	}
 	
-	auto getAssocId() { return asso_id; }
-	auto peerIp() { return ipaddr->c_str(); }
+	auto associcationId() { return asso_id; }
+	auto peerIp() { return ipaddr; }
 	auto peerPort() { return port; }
-	auto getPayload() { return payload->c_str(); }
+	auto peerStream() {return stream;}
+	auto getPayload() { return payload; }
 	
 private:
-	std::unique_ptr<std::string> ipaddr;
-	int port;
-	std::unique_ptr<std::string> payload;
-	int asso_id;
+	std::shared_ptr<std::string> ipaddr;
+	in_port_t port;
+	std::shared_ptr<std::string> payload;
+	sctp_assoc_t asso_id;
+	uint16_t stream;
 };
 
 #endif
