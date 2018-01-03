@@ -5,7 +5,7 @@
 #include <string.h>
 
 
-SctpServerEndpoint::SctpServerEndpoint(std::string localIp, std::uint32_t port): continuepoll(true)
+SctpServerEndpoint::SctpServerEndpoint(std::string localIp, std::uint32_t port): continuepoll(true), assoInfo(nullptr)
 {
 	std::cout << "[Poll Thread]: Create socket and bind to: " << localIp << ":" << port << std::endl;
 
@@ -59,7 +59,7 @@ int SctpServerEndpoint::onSctpNotification(std::unique_ptr<SctpMessageEnvelope> 
 			{
 			case SCTP_COMM_UP:
 				std::cout << "[Poll Thread]: New association up with Id: " << msg->associcationId() << std::endl; 
-				std::cout << "[Poll Thread]: New client IP: " << msg->peerIp() << std::endl;
+				std::cout << "[Poll Thread]: New client IP: " << (*msg->peerIp()) << std::endl;
 				std::cout << "[Poll Thread]: New client port: " << msg->peerPort() << std::endl;
 				std::cout << "[Poll Thread]: New client trans stream: " << msg->peerStream() << std::endl;
 				
@@ -71,8 +71,20 @@ int SctpServerEndpoint::onSctpNotification(std::unique_ptr<SctpMessageEnvelope> 
 				//AssociationInfo assInfo{msg->peerIp(), msg->peerPort(), msg->peerStream()};
 				//association_list.insert(std::pair<unsigned int, AssociationInfo> (msg->getAssocId(), std::move(assInfo)))
 				break;
+			case SCTP_COMM_LOST:
+				std::cout <<  "[Poll Thread]: Assoc change, COMMUNICATION LOST" << msg->associcationId() << std::endl;
+				break;
+			case SCTP_RESTART:
+				std::cout <<  "[Poll Thread]: Assoc change, SCTP RESTART" << msg->associcationId() <<std::endl;
+				break;
+			case SCTP_SHUTDOWN_COMP:
+				std::cout <<  "[Poll Thread]: Assoc change,SHUTDOWN COMPLETE" << msg->associcationId() <<std::endl;
+				break;
+			case SCTP_CANT_STR_ASSOC:
+				std::cout <<  "[Poll Thread]: Assoc change,CAN'T START ASSOCIATION" << msg->associcationId() <<std::endl;
+				break;
 			default:
-				std::cout << "[Poll Thread]: Assoc chagne with type: 0x" << std::hex << sctpAssociationChange->sac_state << std::endl;
+				std::cout << "[Poll Thread]: Assoc chagne with unknown type: 0x" << std::hex << sctpAssociationChange->sac_state << std::endl;
 				break;
 			}
 			break;
@@ -81,7 +93,7 @@ int SctpServerEndpoint::onSctpNotification(std::unique_ptr<SctpMessageEnvelope> 
 			std::cout << "[Poll Thread]: Other Notification: 0x" << std::hex << notification->sn_header.sn_type << std::endl;
 			break;
 	}
-	
+
 	//PrintAssocChange(notification);
 
 	return 0;
@@ -89,19 +101,25 @@ int SctpServerEndpoint::onSctpNotification(std::unique_ptr<SctpMessageEnvelope> 
 
 int SctpServerEndpoint::onSctpMessages(std::unique_ptr<SctpMessageEnvelope> msg)
 {
-	std::cout << "[Poll Thread]: SCTP message received: " << msg->getPayload() << std::endl;
+	std::cout << "[Poll Thread]: SCTP message received: " << *(msg->getPayload()) << std::endl;
 		
-	std::cout << "[Poll Thread]: sa address: " << msg->peerIp() << std::endl;
-	std::cout << "[Poll Thread]: sa port: " << msg->peerPort() << std::endl;
+	std::cout << "[Poll Thread]: Client address: " << *(msg->peerIp()) << std::endl;
+	std::cout << "[Poll Thread]: Client port: " << msg->peerPort() << std::endl;
 	
-	std::cout << "[Poll Thread]: assoid = " << msg->associcationId() << std::endl;
+	std::cout << "[Poll Thread]: New association id = " << msg->associcationId() << std::endl;
 	return 0;
 }
 
 
 void SctpServerEndpoint::SendMsg()
 {
-	struct sockaddr_in clientAddr;
+	if(nullptr == assoInfo)
+	{
+		std::cout << "[Main thread]: No client connected now!" << std::endl;
+		return;
+	}
+	
+	sockaddr_in clientAddr;
 	clientAddr.sin_family = AF_INET;
 	clientAddr.sin_port = htons(assoInfo->port);
 	clientAddr.sin_addr.s_addr = inet_addr(assoInfo->ip->c_str());
@@ -109,7 +127,7 @@ void SctpServerEndpoint::SendMsg()
 	std::string message;
 	unsigned int rd_sz = 20;
 	
-	std::cout << "Input the message echo to client: " << std::endl;
+	std::cout << "[Main thread]: Input the message echo to client: " << std::endl;
 	std::cin >> message;
 	
 	sctp_sendmsg(sock_op->socket_fd(), message.c_str(), rd_sz, 

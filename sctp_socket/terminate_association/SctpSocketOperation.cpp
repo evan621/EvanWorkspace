@@ -137,6 +137,7 @@ int SctpSocketOperation::SctpMsgHandler(int sock_fd)
 	}
 	
 	std::unique_ptr<SctpMessageEnvelope> msg = std::make_unique<SctpMessageEnvelope>(readbuf, &cliaddr, &sri);
+	
 		
 	if(msg_flags&MSG_NOTIFICATION) 
 	{

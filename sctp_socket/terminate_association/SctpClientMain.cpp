@@ -8,13 +8,14 @@ int main()
 {
 	std::unique_ptr<SctpEndpoint> endpoint;  
 
+	std::cout << "[Main thread]: Input your choice: " <<std::endl;
+	std::cout << "[Main thread]: [0] Exit the client!" << std::endl;
+	std::cout << "[Main thread]: [1] Send message to server" << std::endl;
+
 	endpoint = std::make_unique<SctpClientEndpoint>();
 	int option;
 	while(1)
 	{
-		std::cout << "Input your choice: " <<std::endl;
-		std::cout << "[0] Exit the client!" << std::endl;
-		std::cout << "[1] Send message to server" << std::endl;
 		std::cin >> option;
 		switch(option)
 		{
