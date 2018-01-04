@@ -13,15 +13,20 @@ SctpServerEndpoint::SctpServerEndpoint(std::string localIp, std::uint32_t port):
 	sock_op->SetSocketOpt();
 	sock_op->Bind(localIp, port);
 	
-	// register for callback
-	sock_op->registerNotificationCb([this](std::unique_ptr<SctpMessageEnvelope> msg)
-				{return onSctpNotification(std::move(msg));} );
-	sock_op->registerMessageCb([this](std::unique_ptr<SctpMessageEnvelope> msg)
-				{return onSctpMessages(std::move(msg));} );
+	// register fd
+	io_multi = std::make_unique<IoMultiplex>();
+	io_multi->RegisterFd(sock_op->socket_fd(), [this](int sock_fd) 
+			{ SctpMsgHandler(sock_fd); } );
+	io_multi->RegisterFd(0, [this](int fd) 
+			{  
+				char buf[20] = {0};  
+				read(fd, buf, sizeof(buf));
+				std::cout << "read message: " << buf << std::endl; });
 	
-	// create new thread for the polling of received messages
-	pollThread = std::thread(&SctpServerEndpoint::ThreadHandler, this);
 }
+
+
+
 
 
 SctpServerEndpoint::~SctpServerEndpoint()
@@ -34,12 +39,20 @@ SctpServerEndpoint::~SctpServerEndpoint()
 }
 
 
-void SctpServerEndpoint::ThreadHandler()
+int SctpServerEndpoint::SctpMsgHandler(int sock_fd)
 {
-	while(continuepoll)
+	std::unique_ptr<SctpMessageEnvelope> msg = sock_op->Receive(sock_fd);
+		
+	if((msg->flags())&MSG_NOTIFICATION) 
 	{
-		sock_op->StartPoolForMsg();
+		return onSctpNotification(std::move(msg));
 	}
+	else
+	{
+		return onSctpMessages(std::move(msg));
+	}
+	
+	return 0;
 }
 
 int SctpServerEndpoint::onSctpNotification(std::unique_ptr<SctpMessageEnvelope> msg)
@@ -109,7 +122,6 @@ int SctpServerEndpoint::onSctpMessages(std::unique_ptr<SctpMessageEnvelope> msg)
 	std::cout << "[Poll Thread]: New association id = " << msg->associcationId() << std::endl;
 	return 0;
 }
-
 
 void SctpServerEndpoint::SendMsg()
 {

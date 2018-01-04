@@ -9,7 +9,7 @@
 
 class SctpMessageEnvelope{
 public:
-	SctpMessageEnvelope(char* readbuf, sockaddr_in* clientAddr, sctp_sndrcvinfo* sendRecvInfo)
+	SctpMessageEnvelope(char* readbuf, sockaddr_in* clientAddr, sctp_sndrcvinfo* sendRecvInfo, int msg_flags): msg_flags(msg_flags)
 	{
 		payload = std::make_shared<std::string>(readbuf);
 		
@@ -34,13 +34,14 @@ public:
 	auto peerPort() { return port; }
 	auto peerStream() {return stream;}
 	auto getPayload() { return payload; }
-	
+	auto flags() {return msg_flags;}
 private:
 	std::shared_ptr<std::string> ipaddr;
 	in_port_t port;
 	std::shared_ptr<std::string> payload;
 	sctp_assoc_t asso_id;
 	uint16_t stream;
+	int msg_flags;
 };
 
 #endif

@@ -13,6 +13,7 @@ int main()
 	std::cout << "[Main thread]: [1] Send message to server" << std::endl;
 
 	endpoint = std::make_unique<SctpClientEndpoint>();
+	
 	int option;
 	while(1)
 	{

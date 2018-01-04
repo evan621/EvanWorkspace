@@ -82,43 +82,7 @@ void SctpSocketOperation::Bind(std::string localIp, uint32_t port)
 }
 
 
-int SctpSocketOperation::StartPoolForMsg()
-{
-	pollfd fdtable; 
-	
-	fdtable.fd = sock_fd;
-	fdtable.events = POLLIN;
-	
-	//std::cout << "[Poll Thread]: Waiting for new messages!" << std::endl;
-	
-	switch(poll(&fdtable, 1, 1000)){
-	case -1:
-		std::cout << "[Poll Thread]: Error detected for poll: " << strerror(errno) << std::endl;
-		break;
-	case 0:
-		//std::cout << "[Poll Thread]: Time out for poll " << std::endl;
-		//return 0;
-		break;
-	default:
-		if(fdtable.revents & POLLIN)
-		{
-			if(-1 == SctpMsgHandler(fdtable.fd))
-			{
-				return -1;
-			}
-		}
-		else
-		{
-			std::cout << "[Poll Thread]: Exception during poll, revents = " << std::hex << fdtable.revents << std::endl;
-		}
-		break;
-	}
-
-	return 0;
-}
-
-
-int SctpSocketOperation::SctpMsgHandler(int sock_fd)
+std::unique_ptr<SctpMessageEnvelope> SctpSocketOperation::Receive(int sock_fd)
 {
 	int msg_flags;
 	size_t rd_sz;
@@ -133,20 +97,10 @@ int SctpSocketOperation::SctpMsgHandler(int sock_fd)
 						 (struct sockaddr *)&cliaddr, &len, &sri, &msg_flags))
 	{		
 		std::cout << "[Poll Thread]: Error when sctp_recvmsg: " << strerror(errno) << std::endl;
-		return -1;
+		return nullptr;
 	}
 	
-	std::unique_ptr<SctpMessageEnvelope> msg = std::make_unique<SctpMessageEnvelope>(readbuf, &cliaddr, &sri);
+	std::unique_ptr<SctpMessageEnvelope> msg = std::make_unique<SctpMessageEnvelope>(readbuf, &cliaddr, &sri, msg_flags);
 	
-		
-	if(msg_flags&MSG_NOTIFICATION) 
-	{
-		return onNotificaiton(std::move(msg));
-	}
-	else
-	{
-		return onMessage(std::move(msg));
-	}
-	
-	return 0;
+	return std::move(msg);
 }

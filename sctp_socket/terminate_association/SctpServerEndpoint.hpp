@@ -1,6 +1,7 @@
 #include "SctpEndpoint.hpp"
 #include "SctpNotification.hpp"
 #include "SctpSocketOperation.hpp"
+#include "IoMultiplex.hpp"
 #include <string>
 #include <stdint.h>
 #include <thread>
@@ -22,13 +23,18 @@ public:
 	~SctpServerEndpoint();
 	
 	void SendMsg() override;
+	void Start() override {	io_multi->StartPool(); }
+
 private:
     int onSctpNotification(std::unique_ptr<SctpMessageEnvelope> msg);
 	int onSctpMessages(std::unique_ptr<SctpMessageEnvelope> msg);
-	void ThreadHandler();
+	int SctpMsgHandler(int sock_fd);
+
+	//void ThreadHandler();
 	
 	//int sock_fd{-1};
 	std::unique_ptr<SctpSocketOperation> sock_op;
+	std::unique_ptr<IoMultiplex> io_multi;
 	
 	//std::map<unsigned int, AssociationInfo> association_list;
 	std::unique_ptr<AssociationInfo> assoInfo;
