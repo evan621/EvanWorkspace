@@ -4,7 +4,6 @@ class SctpEndpoint
 {
 public:
 	virtual ~SctpEndpoint() = default;
-	virtual void SendMsg() = 0;
 	virtual void Start() = 0;
 };
 

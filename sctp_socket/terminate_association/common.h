@@ -1,5 +1,5 @@
 
-#define MAX_BUFFER	1024
+#define MAX_BUFFER	20
 
 #define MY_PORT_NUM	18002
 
@@ -9,6 +9,8 @@
 #define LISTEN_QUEUE 5
 
 #define TIME_OUT 10000
+
+#define STDIN 0
 
 //#define ENABLE_ALL_NOTIFICATION
 

@@ -15,31 +15,27 @@ struct AssociationInfo{
 	unsigned int stream;
 };
 
-
 class SctpServerEndpoint: public SctpEndpoint
 {
 public:
 	SctpServerEndpoint(std::string localIp, std::uint32_t port);
 	~SctpServerEndpoint();
 	
-	void SendMsg() override;
-	void Start() override {	io_multi->StartPool(); }
+	void Start() override;
 
 private:
     int onSctpNotification(std::unique_ptr<SctpMessageEnvelope> msg);
 	int onSctpMessages(std::unique_ptr<SctpMessageEnvelope> msg);
 	int SctpMsgHandler(int sock_fd);
+	void ReadUserCmd(int fd);
+	void SendMsg();
 
-	//void ThreadHandler();
-	
-	//int sock_fd{-1};
 	std::unique_ptr<SctpSocketOperation> sock_op;
 	std::unique_ptr<IoMultiplex> io_multi;
 	
 	//std::map<unsigned int, AssociationInfo> association_list;
 	std::unique_ptr<AssociationInfo> assoInfo;
 	
-	std::thread pollThread;
 	SctpNotification notification;
 	bool continuepoll;
 };

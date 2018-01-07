@@ -7,8 +7,6 @@
 
 SctpServerEndpoint::SctpServerEndpoint(std::string localIp, std::uint32_t port): continuepoll(true), assoInfo(nullptr)
 {
-	std::cout << "[Poll Thread]: Create socket and bind to: " << localIp << ":" << port << std::endl;
-
 	sock_op = std::make_unique<SctpSocketOperation>();
 	sock_op->SetSocketOpt();
 	sock_op->Bind(localIp, port);
@@ -16,33 +14,66 @@ SctpServerEndpoint::SctpServerEndpoint(std::string localIp, std::uint32_t port):
 	// register fd
 	io_multi = std::make_unique<IoMultiplex>();
 	io_multi->RegisterFd(sock_op->socket_fd(), [this](int sock_fd) 
-			{ SctpMsgHandler(sock_fd); } );
-	io_multi->RegisterFd(0, [this](int fd) 
-			{  
-				char buf[20] = {0};  
-				read(fd, buf, sizeof(buf));
-				std::cout << "read message: " << buf << std::endl; });
-	
+			{ 	
+				if(-1==SctpMsgHandler(sock_fd))
+				{
+					continuepoll = false;
+				}
+			} );
+	io_multi->RegisterFd(STDIN, [this](int fd) 
+			{  ReadUserCmd(fd); } );
+			
+	std::cout << "[Server]: Server Start and bind to: " << localIp << ":" << port << std::endl;
+	std::cout << "[Server]: Register socket fd: " << sock_op->socket_fd() << std::endl;
 }
-
-
-
-
 
 SctpServerEndpoint::~SctpServerEndpoint()
 {	
-	std::cout << "[Poll Thread]: SctpServerEndpoint destructor called!" << std::endl;
-	
-	continuepoll = false;
+	std::cout << "[Server]: SctpServerEndpoint destructor called!" << std::endl;
+}
 
-	pollThread.join();
+void SctpServerEndpoint::Start()
+{	
+	while(continuepoll)
+	{
+		std::cout << "=============================================" << std::endl;
+		std::cout << "[Server]: Wait for new message or command..." << std::endl;
+		std::cout << "[Server]: [0] Exist the client!" << std::endl; 
+		std::cout << "[Server]: [1] Send new message to server!" << std::endl; 
+		io_multi->Poll(); 
+	}
+}
+
+void SctpServerEndpoint::ReadUserCmd(int fd)
+{
+	char buf;  
+	read(fd, &buf, sizeof(buf));
+	switch(buf)
+	{
+		case '0':
+			std::cout << "Exit server! " << std::endl; 
+			continuepoll = false;
+			break;
+		case '1':
+			SendMsg();
+			break;
+		default:
+			std::cout << "Unrecognized command!" << std::endl;
+			break;
+	}
 }
 
 
 int SctpServerEndpoint::SctpMsgHandler(int sock_fd)
 {
 	std::unique_ptr<SctpMessageEnvelope> msg = sock_op->Receive(sock_fd);
-		
+	
+	if(nullptr == msg)
+	{
+		std::cout << "[Server]: Error when receive on fd: " << sock_fd << std::endl;
+		return -1;
+	}
+
 	if((msg->flags())&MSG_NOTIFICATION) 
 	{
 		return onSctpNotification(std::move(msg));
@@ -51,17 +82,17 @@ int SctpServerEndpoint::SctpMsgHandler(int sock_fd)
 	{
 		return onSctpMessages(std::move(msg));
 	}
-	
-	return 0;
 }
 
 int SctpServerEndpoint::onSctpNotification(std::unique_ptr<SctpMessageEnvelope> msg)
 {
-	std::cout << "[Poll Thread]: Notification received" << std::endl;
+	std::cout << "[Server]: Notification received" << std::endl;
 	
 	sctp_notification* notification;
 
-	notification = (union sctp_notification *) msg->getPayload()->c_str();
+	notification = (sctp_notification*)msg->payloadData();
+	
+	msg->print();
 	
 	switch(notification->sn_header.sn_type) {
 		case SCTP_ASSOC_CHANGE: 
@@ -71,10 +102,10 @@ int SctpServerEndpoint::onSctpNotification(std::unique_ptr<SctpMessageEnvelope> 
 			switch(sctpAssociationChange->sac_state)
 			{
 			case SCTP_COMM_UP:
-				std::cout << "[Poll Thread]: New association up with Id: " << msg->associcationId() << std::endl; 
-				std::cout << "[Poll Thread]: New client IP: " << (*msg->peerIp()) << std::endl;
-				std::cout << "[Poll Thread]: New client port: " << msg->peerPort() << std::endl;
-				std::cout << "[Poll Thread]: New client trans stream: " << msg->peerStream() << std::endl;
+				std::cout << "[Server]: New association up with Id: " << sctpAssociationChange->sac_assoc_id << std::endl; 
+				std::cout << "[Server]: New client IP: " << (*msg->peerIp()) << std::endl;
+				std::cout << "[Server]: New client port: " << msg->peerPort() << std::endl;
+				std::cout << "[Server]: New client trans stream: " << msg->peerStream() << std::endl;
 				
 				assoInfo = std::make_unique<AssociationInfo>();
 				assoInfo->ip 	 = msg->peerIp();
@@ -85,25 +116,25 @@ int SctpServerEndpoint::onSctpNotification(std::unique_ptr<SctpMessageEnvelope> 
 				//association_list.insert(std::pair<unsigned int, AssociationInfo> (msg->getAssocId(), std::move(assInfo)))
 				break;
 			case SCTP_COMM_LOST:
-				std::cout <<  "[Poll Thread]: Assoc change, COMMUNICATION LOST" << msg->associcationId() << std::endl;
+				std::cout <<  "[Server]: Assoc change, COMMUNICATION LOST" << sctpAssociationChange->sac_assoc_id << std::endl;
 				break;
 			case SCTP_RESTART:
-				std::cout <<  "[Poll Thread]: Assoc change, SCTP RESTART" << msg->associcationId() <<std::endl;
+				std::cout <<  "[Server]: Assoc change, SCTP RESTART" << sctpAssociationChange->sac_assoc_id <<std::endl;
 				break;
 			case SCTP_SHUTDOWN_COMP:
-				std::cout <<  "[Poll Thread]: Assoc change,SHUTDOWN COMPLETE" << msg->associcationId() <<std::endl;
+				std::cout <<  "[Server]: Assoc change,SHUTDOWN COMPLETE" << sctpAssociationChange->sac_assoc_id <<std::endl;
 				break;
 			case SCTP_CANT_STR_ASSOC:
-				std::cout <<  "[Poll Thread]: Assoc change,CAN'T START ASSOCIATION" << msg->associcationId() <<std::endl;
+				std::cout <<  "[Server]: Assoc change,CAN'T START ASSOCIATION" << sctpAssociationChange->sac_assoc_id <<std::endl;
 				break;
 			default:
-				std::cout << "[Poll Thread]: Assoc chagne with unknown type: 0x" << std::hex << sctpAssociationChange->sac_state << std::endl;
+				std::cout << "[Server]: Assoc chagne with unknown type: 0x" << std::hex << sctpAssociationChange->sac_state << std::endl;
 				break;
 			}
 			break;
 		}
 		default:
-			std::cout << "[Poll Thread]: Other Notification: 0x" << std::hex << notification->sn_header.sn_type << std::endl;
+			std::cout << "[Server]: Other Notification: 0x" << std::hex << notification->sn_header.sn_type << std::endl;
 			break;
 	}
 
@@ -114,12 +145,12 @@ int SctpServerEndpoint::onSctpNotification(std::unique_ptr<SctpMessageEnvelope> 
 
 int SctpServerEndpoint::onSctpMessages(std::unique_ptr<SctpMessageEnvelope> msg)
 {
-	std::cout << "[Poll Thread]: SCTP message received: " << *(msg->getPayload()) << std::endl;
+	std::cout << "[Server]: SCTP message received: " << *(msg->payloadData()) << std::endl;
 		
-	std::cout << "[Poll Thread]: Client address: " << *(msg->peerIp()) << std::endl;
-	std::cout << "[Poll Thread]: Client port: " << msg->peerPort() << std::endl;
+	std::cout << "[Server]: Client address: " << *(msg->peerIp()) << std::endl;
+	std::cout << "[Server]: Client port: " << msg->peerPort() << std::endl;
 	
-	std::cout << "[Poll Thread]: New association id = " << msg->associcationId() << std::endl;
+	std::cout << "[Server]: New association id = " << msg->associcationId() << std::endl;
 	return 0;
 }
 
@@ -127,7 +158,7 @@ void SctpServerEndpoint::SendMsg()
 {
 	if(nullptr == assoInfo)
 	{
-		std::cout << "[Main thread]: No client connected now!" << std::endl;
+		std::cout << "[Server]: No client connected now!" << std::endl;
 		return;
 	}
 	
@@ -139,7 +170,7 @@ void SctpServerEndpoint::SendMsg()
 	std::string message;
 	unsigned int rd_sz = 20;
 	
-	std::cout << "[Main thread]: Input the message echo to client: " << std::endl;
+	std::cout << "[Server]: Input the message echo to client: " << std::endl;
 	std::cin >> message;
 	
 	sctp_sendmsg(sock_op->socket_fd(), message.c_str(), rd_sz, 

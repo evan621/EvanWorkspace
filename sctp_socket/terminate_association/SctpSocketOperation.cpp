@@ -1,5 +1,5 @@
 #include "SctpSocketOperation.hpp"
-
+#include "SctpNotification.hpp"
 
 SctpSocketOperation::SctpSocketOperation()
 {
@@ -87,20 +87,37 @@ std::unique_ptr<SctpMessageEnvelope> SctpSocketOperation::Receive(int sock_fd)
 	int msg_flags;
 	size_t rd_sz;
 
-	char readbuf[MAX_BUFFER+1];
 	sockaddr_in cliaddr;
 	sctp_sndrcvinfo sri;
 	socklen_t len;
-	
+		
+	char readBuf[MAX_BUFFER+1];
 	len = sizeof(struct sockaddr_in);
-	if(-1 == sctp_recvmsg(sock_fd, readbuf, sizeof(readbuf),
+	if(-1 == sctp_recvmsg(sock_fd, readBuf, MAX_BUFFER,
 						 (struct sockaddr *)&cliaddr, &len, &sri, &msg_flags))
 	{		
-		std::cout << "[Poll Thread]: Error when sctp_recvmsg: " << strerror(errno) << std::endl;
+		std::cout << "Error when sctp_recvmsg: " << strerror(errno) << std::endl;
 		return nullptr;
 	}
 	
-	std::unique_ptr<SctpMessageEnvelope> msg = std::make_unique<SctpMessageEnvelope>(readbuf, &cliaddr, &sri, msg_flags);
+	std::vector<char> buf(readBuf, readBuf + sizeof(readBuf));
 	
+	SctpNotification notification;
+	notification.Print(buf.data());
+		
+	
+	{
+	unsigned int *a = (unsigned int*)buf.data();
+	std::cout << "Received data size: " << std::hex << buf.size() << std::endl;
+	std::cout << "buf[0]: " << std::hex << a[0] << std::endl;
+	std::cout << "buf[1]: " << std::hex << a[1] << std::endl;
+	std::cout << "buf[2]: " << std::hex << a[2] << std::endl;
+	std::cout << "buf[3]: " << std::hex << a[3] << std::endl;
+	}
+ 
+	std::unique_ptr<SctpMessageEnvelope> msg = std::make_unique<SctpMessageEnvelope>(buf, &cliaddr, &sri, msg_flags);
+	
+	msg->print();
+
 	return std::move(msg);
 }
