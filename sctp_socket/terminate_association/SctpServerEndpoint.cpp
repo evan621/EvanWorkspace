@@ -3,6 +3,7 @@
 #include <iostream>
 #include <errno.h>
 #include <string.h>
+#include <stdio.h>
 
 
 SctpServerEndpoint::SctpServerEndpoint(std::string localIp, std::uint32_t port): continuepoll(true), assoInfo(nullptr)
@@ -23,8 +24,7 @@ SctpServerEndpoint::SctpServerEndpoint(std::string localIp, std::uint32_t port):
 	io_multi->RegisterFd(STDIN, [this](int fd) 
 			{  ReadUserCmd(fd); } );
 			
-	std::cout << "[Server]: Server Start and bind to: " << localIp << ":" << port << std::endl;
-	std::cout << "[Server]: Register socket fd: " << sock_op->socket_fd() << std::endl;
+	printf("[Server]: Server Start and bind to addr(%s:%d)\n", localIp.c_str(), port);
 }
 
 SctpServerEndpoint::~SctpServerEndpoint()
@@ -36,10 +36,8 @@ void SctpServerEndpoint::Start()
 {	
 	while(continuepoll)
 	{
-		std::cout << "=============================================" << std::endl;
-		std::cout << "[Server]: Wait for new message or command..." << std::endl;
-		std::cout << "[Server]: [0] Exist the client!" << std::endl; 
-		std::cout << "[Server]: [1] Send new message to server!" << std::endl; 
+		printf("====================================================================\n");
+		printf("[Server]: Wait for new message or command([0: Exit]; [1: NewMessage])...\n");
 		io_multi->Poll(); 
 	}
 }
@@ -86,14 +84,10 @@ int SctpServerEndpoint::SctpMsgHandler(int sock_fd)
 
 int SctpServerEndpoint::onSctpNotification(std::unique_ptr<SctpMessageEnvelope> msg)
 {
-	std::cout << "[Server]: Notification received" << std::endl;
+	printf("[Server]: Notification received!\n");
 	
-	sctp_notification* notification;
-
-	notification = (sctp_notification*)msg->payloadData();
-	
-	msg->print();
-	
+	sctp_notification* notification = (sctp_notification*)msg->payloadData();
+			
 	switch(notification->sn_header.sn_type) {
 		case SCTP_ASSOC_CHANGE: 
 		{
@@ -102,39 +96,35 @@ int SctpServerEndpoint::onSctpNotification(std::unique_ptr<SctpMessageEnvelope> 
 			switch(sctpAssociationChange->sac_state)
 			{
 			case SCTP_COMM_UP:
-				std::cout << "[Server]: New association up with Id: " << sctpAssociationChange->sac_assoc_id << std::endl; 
-				std::cout << "[Server]: New client IP: " << (*msg->peerIp()) << std::endl;
-				std::cout << "[Server]: New client port: " << msg->peerPort() << std::endl;
-				std::cout << "[Server]: New client trans stream: " << msg->peerStream() << std::endl;
+				printf("[Server]: Assoc change, COMMUNICATION UP! ClientAddr{ IP/Port(%s:%d) }\n", msg->peerIp()->c_str(),  msg->peerPort());
 				
 				assoInfo = std::make_unique<AssociationInfo>();
 				assoInfo->ip 	 = msg->peerIp();
 				assoInfo->port 	 = msg->peerPort();
-				assoInfo->stream = msg->peerStream();
 				
 				//AssociationInfo assInfo{msg->peerIp(), msg->peerPort(), msg->peerStream()};
 				//association_list.insert(std::pair<unsigned int, AssociationInfo> (msg->getAssocId(), std::move(assInfo)))
 				break;
 			case SCTP_COMM_LOST:
-				std::cout <<  "[Server]: Assoc change, COMMUNICATION LOST" << sctpAssociationChange->sac_assoc_id << std::endl;
+				printf("[Server]: Assoc change(ID=0x%x), COMMUNICATION LOST\n", sctpAssociationChange->sac_assoc_id);
 				break;
 			case SCTP_RESTART:
-				std::cout <<  "[Server]: Assoc change, SCTP RESTART" << sctpAssociationChange->sac_assoc_id <<std::endl;
+				printf("[Server]: Assoc change(ID=0x%x), SCTP RESTART\n", sctpAssociationChange->sac_assoc_id);
 				break;
 			case SCTP_SHUTDOWN_COMP:
-				std::cout <<  "[Server]: Assoc change,SHUTDOWN COMPLETE" << sctpAssociationChange->sac_assoc_id <<std::endl;
+				printf("[Server]: Assoc change(ID=0x%x), SHUTDOWN COMPLETE\n", sctpAssociationChange->sac_assoc_id);
 				break;
 			case SCTP_CANT_STR_ASSOC:
-				std::cout <<  "[Server]: Assoc change,CAN'T START ASSOCIATION" << sctpAssociationChange->sac_assoc_id <<std::endl;
+				printf("[Server]: Assoc change(ID=0x%x), CAN'T START ASSOCIATION\n", sctpAssociationChange->sac_assoc_id);
 				break;
 			default:
-				std::cout << "[Server]: Assoc chagne with unknown type: 0x" << std::hex << sctpAssociationChange->sac_state << std::endl;
+				printf("[Server]: Assoc chagne with unknown type (0x%x)\n", sctpAssociationChange->sac_state);
 				break;
 			}
 			break;
 		}
 		default:
-			std::cout << "[Server]: Other Notification: 0x" << std::hex << notification->sn_header.sn_type << std::endl;
+			printf("[Server]: Other Notification: (0x%x)\n", notification->sn_header.sn_type);
 			break;
 	}
 
@@ -145,12 +135,13 @@ int SctpServerEndpoint::onSctpNotification(std::unique_ptr<SctpMessageEnvelope> 
 
 int SctpServerEndpoint::onSctpMessages(std::unique_ptr<SctpMessageEnvelope> msg)
 {
-	std::cout << "[Server]: SCTP message received: " << *(msg->payloadData()) << std::endl;
-		
-	std::cout << "[Server]: Client address: " << *(msg->peerIp()) << std::endl;
-	std::cout << "[Server]: Client port: " << msg->peerPort() << std::endl;
-	
-	std::cout << "[Server]: New association id = " << msg->associcationId() << std::endl;
+	assoInfo->stream = msg->peerStream();
+	printf("[Server]: SCTP message('') received from IP/Port(%s:%d) on assoc(0x%x) / stream(%d)\n ", 
+			//*message,
+			msg->peerIp()->c_str(),
+			msg->peerPort(),
+			msg->associcationId(),
+			msg->peerStream());
 	return 0;
 }
 

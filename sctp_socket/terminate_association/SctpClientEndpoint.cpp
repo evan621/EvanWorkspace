@@ -12,6 +12,7 @@
 #include <poll.h>
 #include <functional>
 #include "SctpSocketOperation.hpp"
+#include <stdio.h>
 
 
 //#define ENABLE_ALL_NOTIFICATION
@@ -28,14 +29,12 @@ SctpClientEndpoint::SctpClientEndpoint(): continuepoll(true)
 			{ SctpMsgHandler(fd); });
 	io_multi->RegisterFd(STDIN, [this](int fd)
 			{ ReadUserCmd(fd); });
-	
-	std::cout << "[Client]: Start Client, Register socket: " << sock_op->socket_fd() << std::endl;
 }
 
 SctpClientEndpoint::~SctpClientEndpoint()
 {
 	// close socket;
-	std::cout << "[Client]: Close Client!" << std::endl;
+	printf("[Client]: Close Client!\n");
 }
 
 void SctpClientEndpoint::ReadUserCmd(int fd)
@@ -61,10 +60,8 @@ void SctpClientEndpoint::Start()
 {
 	while(continuepoll)
 	{
-		std::cout << "=============================================" << std::endl;
-		std::cout << "[Client]: Waiting for new message or command!" << std::endl; 
-		std::cout << "[Client]: [0] Exist the client!" << std::endl; 
-		std::cout << "[Client]: [1] Send new message to server!" << std::endl; 
+		printf("========================================================================\n");
+		printf("[Client]: Waiting for new message or command.([0: Exit]; [1: NewMsg];)..\n");
 
 		io_multi->Poll();
 	}
@@ -82,7 +79,7 @@ int SctpClientEndpoint::SctpMsgHandler(int sock_fd)
 		
 	if((msg->flags())&MSG_NOTIFICATION) 
 	{
-	//	return onSctpNotification(std::move(msg));
+		return onSctpNotification(std::move(msg));
 	}
 	else
 	{
@@ -93,12 +90,10 @@ int SctpClientEndpoint::SctpMsgHandler(int sock_fd)
 
 int SctpClientEndpoint::onSctpNotification(std::unique_ptr<SctpMessageEnvelope> msg)
 {
-	std::cout << "[Client]: Notification received" << std::endl;
+	printf("[Server]: Notification received!\n");
 	
-	sctp_notification* notification;
+	sctp_notification* notification = (sctp_notification*)msg->payloadData();
 
-	notification = (union sctp_notification *) msg->payloadData();
-	
 	switch(notification->sn_header.sn_type) {
 		case SCTP_ASSOC_CHANGE: 
 		{
@@ -107,33 +102,29 @@ int SctpClientEndpoint::onSctpNotification(std::unique_ptr<SctpMessageEnvelope> 
 			switch(sctpAssociationChange->sac_state)
 			{
 			case SCTP_COMM_UP:
-				std::cout << "[Client]: New association up with Id: " << msg->associcationId() << std::endl; 
-				std::cout << "[Client]: New client IP: " << (*msg->peerIp()) << std::endl;
-				std::cout << "[Client]: New client port: " << msg->peerPort() << std::endl;
-				std::cout << "[Client]: New client trans stream: " << msg->peerStream() << std::endl;				
-				//AssociationInfo assInfo{msg->peerIp(), msg->peerPort(), msg->peerStream()};
-				//association_list.insert(std::pair<unsigned int, AssociationInfo> (msg->getAssocId(), std::move(assInfo)))
+				printf("[Server]: Assoc change, COMMUNICATION UP! ClientAddr{ IP/Port(%s:%d) }\n", msg->peerIp()->c_str(),  msg->peerPort());
+
 				break;
 			case SCTP_COMM_LOST:
-				std::cout <<  "[Client]: Assoc change, COMMUNICATION LOST" << msg->associcationId() << std::endl;
+				printf("[Server]: Assoc change(ID=%x), COMMUNICATION LOST\n", sctpAssociationChange->sac_assoc_id);
 				break;
 			case SCTP_RESTART:
-				std::cout <<  "[Client]: Assoc change, SCTP RESTART" << msg->associcationId() <<std::endl;
+				printf("[Server]: Assoc change(ID=%x), SCTP RESTART\n", sctpAssociationChange->sac_assoc_id);
 				break;
 			case SCTP_SHUTDOWN_COMP:
-				std::cout <<  "[Client]: Assoc change,SHUTDOWN COMPLETE" << msg->associcationId() <<std::endl;
+				printf("[Server]: Assoc change(ID=%x), SHUTDOWN COMPLETE\n", sctpAssociationChange->sac_assoc_id);
 				break;
 			case SCTP_CANT_STR_ASSOC:
-				std::cout <<  "[Client]: Assoc change,CAN'T START ASSOCIATION" << msg->associcationId() <<std::endl;
+				printf("[Server]: Assoc change(ID=%x), CAN'T START ASSOCIATION\n", sctpAssociationChange->sac_assoc_id);
 				break;
 			default:
-				std::cout << "[Client]: Assoc change with unknown type: 0x" << std::hex << sctpAssociationChange->sac_state << std::endl;
+				printf("[Server]: Assoc chagne with unknown type (0x%x)\n", sctpAssociationChange->sac_state);
 				break;
 			}
 			break;
 		}
 		default:
-			std::cout << "[Client]: Other Notification: 0x" << std::hex << notification->sn_header.sn_type << std::endl;
+			printf("[Server]: Other Notification: (0x%x)\n", notification->sn_header.sn_type);
 			break;
 	}
 
@@ -144,12 +135,12 @@ int SctpClientEndpoint::onSctpNotification(std::unique_ptr<SctpMessageEnvelope> 
 
 int SctpClientEndpoint::onSctpMessages(std::unique_ptr<SctpMessageEnvelope> msg)
 {
-	std::cout << "[Client]: SCTP message received: " << (*msg->payloadData()) << std::endl;
-		
-	std::cout << "[sock add]: sa address: " << (*msg->peerIp()) << std::endl;
-	std::cout << "[sock add]: sa port: " << msg->peerPort() << std::endl;
-	
-	std::cout << "[snd rcv info]: assoid = " << msg->associcationId() << std::endl;
+	printf("[Client]: SCTP message('') received from IP/Port(%s:%d) on assoc(0x%x) / stream(%d)\n ", 
+			//*(msg->payloadData()),
+			msg->peerIp()->c_str(),
+			msg->peerPort(),
+			msg->associcationId(),
+			msg->peerStream());
 	return 0;
 }
 
@@ -166,10 +157,7 @@ void SctpClientEndpoint::SendMsg()
 	servaddr.sin_port = htons(MY_PORT_NUM);
 	servaddr.sin_addr.s_addr = inet_addr( "127.0.0.1" );
 	
-	std::cout << "[Main thread]: Chose the message type to send: " <<std::endl;
-	std::cout << "[Main thread]: [0] Abort Message" << std::endl;
-	std::cout << "[Main thread]: [1] Normal message!" << std::endl;
-	std::cout << "[Main thread]: [2] EOF" << std::endl;
+	printf("[Client]: Chose message type, [0: Abort]; [1: Normal]; [2: EOF] ...\n");
 
 	int option;
 	int stream = 1;
@@ -178,7 +166,7 @@ void SctpClientEndpoint::SendMsg()
 	{
 		case 1:
 		{
-			std::cout << "[Main thread]: Input message content!" << std::endl;
+			printf("[Client]: Input message content!\n");
 			std::cin >> message ;
 
 			sctp_sendmsg(sock_op->socket_fd(), message, 20, 
@@ -188,15 +176,15 @@ void SctpClientEndpoint::SendMsg()
 		case 0:
 			sctp_sendmsg(sock_op->socket_fd(), message, 20, 
 					(sockaddr *)&servaddr, sizeof(servaddr), 0, SCTP_ABORT, stream, 0, 0);
-			std::cout << "[Main thread]: Send the abort to server!" << std::endl;
+			printf("[Client]: Send ABORT!\n");
 			break;
 		case 2:
 			sctp_sendmsg(sock_op->socket_fd(), message, 20, 
 					(sockaddr *)&servaddr, sizeof(servaddr), 0, SCTP_EOF, stream, 0, 0);
-			std::cout << "[Main thread]: Send the EOF to server!" << std::endl;
+			printf("[Client]: Send EOF!\n");
 			break;
 		default:
-			std::cout << "[Main thread]: Wrong option!" << std::endl;
+			printf("[Client]: Wrong Option!\n");
 			break;
 			
 	}

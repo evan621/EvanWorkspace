@@ -2,7 +2,7 @@
 #define _SCTP_MESSAGE
 
 #include <memory>
-#include <iostream>
+#include <stdio.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string>
@@ -16,7 +16,7 @@ public:
 	{	
 		if(clientAddr->sin_family != AF_INET)
 		{
-			std::cout << "[sock add]: Not a Internet addr" << std::endl;
+			printf("[sock add]: Not a Internet addr!\n");
 		}
 		
 		char ip[20];
@@ -36,11 +36,11 @@ public:
 	auto payloadData() {return payload.data(); }
 	void print(){
 		unsigned int *a = (unsigned int*)payload.data();
-		std::cout << "[print]: Received data size: " << std::hex << payload.size() << std::endl;
-		std::cout << "buf[0]: " << std::hex << a[0] << ", " << std::endl;
-		std::cout << "buf[1]: " << std::hex << a[1] << ", " << std::endl;
-		std::cout << "buf[2]: " << std::hex << a[2] << ", " << std::endl;
-		std::cout << "buf[3]: " << std::hex << a[3] << ", " << std::endl;	
+		printf("[print]: Received data size: %d\n", (unsigned int)payload.size());
+		printf("buf[0]: %x\n", a[0]);
+		printf("buf[1]: %x\n", a[1]);
+		printf("buf[2]: %x\n", a[2]);
+		printf("buf[3]: %x\n", a[3]);
 	}
 	auto flags() {return msg_flags;}
 private:

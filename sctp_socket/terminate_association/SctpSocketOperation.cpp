@@ -1,12 +1,14 @@
 #include "SctpSocketOperation.hpp"
 #include "SctpNotification.hpp"
+#include "stdio.h"
 
 SctpSocketOperation::SctpSocketOperation()
 {
 	sock_fd = socket( AF_INET, SOCK_SEQPACKET, IPPROTO_SCTP );
 	
 	if(sock_fd < 0){
-		std::cout << "[Server]: Created Socket failed with errono: " << strerror(errno) << std::endl;
+		//std::cout <<  << strerror(errno) << std::endl;
+		printf("[Server]: Created Socket failed with errono: %s\n", strerror(errno));
 	}
 }
 
@@ -36,7 +38,8 @@ void SctpSocketOperation::SetSocketOpt()
 	
 	if(-1 == setsockopt(sock_fd, IPPROTO_SCTP, SCTP_EVENTS, &evnts, sizeof(evnts)))
 	{
-		std::cout << "[Server]: Error setsockopt(IPPROTO_SCTP): " << strerror(errno) << std::endl;
+		//std::cout << "[Server]: Error setsockopt(IPPROTO_SCTP): " << strerror(errno) << std::endl;
+		printf("[Server]: Error setsockopt(IPPROTO_SCTP): %s\n", strerror(errno));
 	}
 	
 	/* For client
@@ -72,12 +75,13 @@ void SctpSocketOperation::Bind(std::string localIp, uint32_t port)
     // replace bind with sctp_bindx
     if(-1 == sctp_bindx( sock_fd, (struct sockaddr *)&servaddr, addr_count,  SCTP_BINDX_ADD_ADDR))
 	{
-		std::cout << "[Server]: sctp_bindx failed with errorno: " << strerror(errno) << std::endl;
+		printf("[Server]: sctp_bindx failed with errorno: %s\n", strerror(errno));
+
 	}
 	
 	if (-1 == listen( sock_fd, LISTEN_QUEUE))
 	{
-		std::cout << "[Server]: listen failed with errorno: " << strerror(errno) << std::endl;
+		printf("[Server]: listen failed with errorno: %s\n", strerror(errno));
 	}
 }
 
@@ -90,34 +94,21 @@ std::unique_ptr<SctpMessageEnvelope> SctpSocketOperation::Receive(int sock_fd)
 	sockaddr_in cliaddr;
 	sctp_sndrcvinfo sri;
 	socklen_t len;
+	
+	memset(&cliaddr, 0, sizeof(cliaddr));
+	memset(&sri, 0, sizeof(sri));
 		
 	char readBuf[MAX_BUFFER+1];
 	len = sizeof(struct sockaddr_in);
 	if(-1 == sctp_recvmsg(sock_fd, readBuf, MAX_BUFFER,
 						 (struct sockaddr *)&cliaddr, &len, &sri, &msg_flags))
 	{		
-		std::cout << "Error when sctp_recvmsg: " << strerror(errno) << std::endl;
+		printf("[Server]: Error when sctp_recvmsg: %s\n", strerror(errno));
 		return nullptr;
 	}
-	
-	std::vector<char> buf(readBuf, readBuf + sizeof(readBuf));
-	
-	SctpNotification notification;
-	notification.Print(buf.data());
 		
-	
-	{
-	unsigned int *a = (unsigned int*)buf.data();
-	std::cout << "Received data size: " << std::hex << buf.size() << std::endl;
-	std::cout << "buf[0]: " << std::hex << a[0] << std::endl;
-	std::cout << "buf[1]: " << std::hex << a[1] << std::endl;
-	std::cout << "buf[2]: " << std::hex << a[2] << std::endl;
-	std::cout << "buf[3]: " << std::hex << a[3] << std::endl;
-	}
- 
+	std::vector<char> buf(readBuf, readBuf + sizeof(readBuf));
 	std::unique_ptr<SctpMessageEnvelope> msg = std::make_unique<SctpMessageEnvelope>(buf, &cliaddr, &sri, msg_flags);
 	
-	msg->print();
-
 	return std::move(msg);
 }
