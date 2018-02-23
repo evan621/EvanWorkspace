@@ -1,0 +1,1 @@
+/usr/bin/c++      CMakeFiles/server.dir/main.cpp.o CMakeFiles/server.dir/worker.cpp.o CMakeFiles/server.dir/master.cpp.o  -o server comm/libcommon.a -lsctp 
