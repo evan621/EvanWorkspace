@@ -31,5 +31,5 @@ add_executable(${EXECUTABLE_NAME} ${SOURCES})
 target_link_libraries(${EXECUTABLE_NAME} common sctp  spdlog ${CMAKE_THREAD_LIBS_INIT})
 
 
-add_executable(loadAndTest loadAndTest.cpp)
+add_executable(loadAndTest loadAndTest.cpp tester.cpp)
 target_link_libraries(loadAndTest common sctp spdlog ${CMAKE_THREAD_LIBS_INIT})

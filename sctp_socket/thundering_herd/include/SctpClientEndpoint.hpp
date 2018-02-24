@@ -1,3 +1,7 @@
+#ifndef _SCTP_CLIENT_ENDPOINT_HPP
+#define _SCTP_CLIENT_ENDPOINT_HPP
+
+
 #include "SctpEndpoint.hpp"
 
 #include "SctpNotification.hpp"
@@ -33,3 +37,5 @@ private:
     std::shared_ptr<spdlog::logger> logger;
 
 };
+
+#endif

@@ -1,3 +1,6 @@
+#ifndef _SCTP_NOTIFICATION_HPP
+#define _SCTP_NOTIFICATION_HPP
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/socket.h>
@@ -23,4 +26,4 @@ private:
 	void PrintAuthenticationIndication(union sctp_notification *notification);
 	void PrintSenderDryEvent(union sctp_notification *notification);
 };
-
+#endif

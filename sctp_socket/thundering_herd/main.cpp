@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#define PROCESS_NUM 3
+#define PROCESS_NUM 0
 
 int spawn_worker_process()
 {

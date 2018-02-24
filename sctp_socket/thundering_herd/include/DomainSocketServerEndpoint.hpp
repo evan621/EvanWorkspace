@@ -13,8 +13,11 @@
 #include "spdlog/spdlog.h"
 #include <memory>
 #include <map>
+#include "common.hpp"
 
 #define MAX_CONNECTION_NUMBER 10
+
+
 
 class DomainSocketServerEndpoint
 {
@@ -22,17 +25,19 @@ public:
     DomainSocketServerEndpoint(const char *servername, std::shared_ptr<IoMultiplex> multiRecv, std::shared_ptr<spdlog::logger> logger);
     ~DomainSocketServerEndpoint();
 
-    int get_client_num() {return client_fds.size(); }
+    int get_client_num() {return conn_client_fds.size(); }
+
+    void register_handler(DomainSocketCallBack handler) {msg_handler = handler;}
+    void publish_msg(std::vector<char> msg);
     
 private:
     int listen_fd;
-    int conn_fd;
+    std::vector<int> conn_client_fds;
     std::shared_ptr<IoMultiplex> io_multi;
     std::shared_ptr<spdlog::logger> logger;
 
-    std::map<int, int> client_fds;
+    DomainSocketCallBack msg_handler;
 
-    
     int domain_listen(const char *servername);
     int domain_accept();
     void domain_close();

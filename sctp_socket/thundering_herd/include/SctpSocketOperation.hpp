@@ -12,7 +12,7 @@
 #include <string>
 #include <memory>
 #include <functional>
-#include "common.h"
+#include "common.hpp"
 #include "SctpMessage.hpp"
 #include "SctpEndpoint.hpp"
 

@@ -2,7 +2,7 @@
 
 
 DomainSocketServerEndpoint::DomainSocketServerEndpoint(const char *servername, std::shared_ptr<IoMultiplex> multiRecv, std::shared_ptr<spdlog::logger> logger): 
-    io_multi(multiRecv), listen_fd(0), conn_fd(0), logger(logger)
+    io_multi(multiRecv), listen_fd(0), logger(logger)
 {
     logger->info("DomainSocketServerEndpoint construct");
 
@@ -23,16 +23,6 @@ DomainSocketServerEndpoint::~DomainSocketServerEndpoint()
 {
     domain_close();
 }
-
-/*
-void DomainSocketServerEndpoint::ready()
-{
-    while((max_client_num != 0)&&(!isEndPointReady))
-    {
-        io_multi->Poll();
-    }
-}
-*/
 
 int DomainSocketServerEndpoint::domain_listen(const char *servername)
 { 
@@ -88,6 +78,7 @@ int DomainSocketServerEndpoint::domain_accept()
     sockaddr_un un;
     struct stat statbuf; 
     len = sizeof(un); 
+    int conn_fd;
 
     if ((conn_fd = accept(listen_fd, (sockaddr *)&un, &len)) < 0) 
     {
@@ -106,7 +97,7 @@ int DomainSocketServerEndpoint::domain_accept()
                             domain_receive(sock_fd);
                         } );  
 
-    client_fds.insert(std::pair<int, int>(conn_fd, statbuf.st_uid));                    
+    conn_client_fds.push_back(conn_fd);                    
 
     logger->info("Server Domain Socket Accept new client: conn_fd({}), client({}, {}, {})!\n", conn_fd, un.sun_path, len, statbuf.st_uid);
     
@@ -120,20 +111,23 @@ void DomainSocketServerEndpoint::domain_close()
         close(listen_fd); 
         listen_fd = 0;
     }    
-    
-    if(conn_fd > 0)
+
+    std::vector<int>::iterator it; 
+    for(it = conn_client_fds.begin(); it != conn_client_fds.end(); ++it)
     {
-        close(conn_fd); 
-        conn_fd = 0;
+        close(*it); 
     }    
 }
 
 void DomainSocketServerEndpoint::domain_receive(int sock_fd)
 {
-    logger->info("Message recevied from {} with fd {}", client_fds.at(sock_fd), sock_fd);
+    logger->info("Message recevied with fd {}", sock_fd);
     int size;
-    char rvbuf[2048];
-    size = recv(conn_fd, rvbuf, 2047, 0);   
+    char rvbuf[MAX_BUFFER];
+    size = recv(sock_fd, rvbuf, MAX_BUFFER, 0);  
+    
+    printf("Server Msg receive(%d), size(%d)\n", getpid(), size);
+
     if(size>0)
     {
         // rvbuf[size]='\0';
@@ -146,9 +140,30 @@ void DomainSocketServerEndpoint::domain_receive(int sock_fd)
     else
     {
         logger->error("message size is 0");
-        exit(0);
+        return;
+        //exit(0);
     }
 
+    std::vector<char> recv_msg(rvbuf, rvbuf + size);
+
+    msg_handler(recv_msg);
+}
+
+
+void DomainSocketServerEndpoint::publish_msg(std::vector<char> msg)
+{    
+    std::vector<int>::iterator it; 
+
+    for(it = conn_client_fds.begin(); it != conn_client_fds.end(); ++it)
+    {
+        int size = send(*it, (char *)msg.data(), msg.size(), 0);
+        printf("Server Msg send(%d), size(%d)\n", getpid(), size);
+
+        if (size > 0)
+        {
+            logger->info("Data[{}] Sended:{} to fd {}.\n",size, msg.data()[0], *it);
+        }
+    }    
 }
 
 

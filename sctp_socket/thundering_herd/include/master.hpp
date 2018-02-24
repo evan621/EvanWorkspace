@@ -13,7 +13,7 @@
 #include "DomainSocketServerEndpoint.hpp"
 #include <iostream>
 #include "spdlog/spdlog.h"
-#include "common.h"
+#include "common.hpp"
 
 
 class master
@@ -28,6 +28,9 @@ private:
     void prepare();
     void send_terminate_to_client();
     void ready();
+    void indicate_test_framework();
+    void msg_handler(std::vector<char> msg);
+
 
     std::unique_ptr<SctpEndpoint> sctp_endpoint;
     std::unique_ptr<DomainSocketClientEndpoint> test_endpoint;

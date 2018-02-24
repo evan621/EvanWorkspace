@@ -1,5 +1,5 @@
 #include "SctpServerEndpoint.hpp"
-#include "common.h"
+#include "common.hpp"
 #include <iostream>
 #include <errno.h>
 #include <string.h>

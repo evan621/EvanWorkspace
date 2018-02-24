@@ -6,7 +6,7 @@
 #include "spdlog/spdlog.h"
 #include <memory>
 
-#include "common.h"
+#include "common.hpp"
 #include "DomainSocketClientEndpoint.hpp"
 
 class worker

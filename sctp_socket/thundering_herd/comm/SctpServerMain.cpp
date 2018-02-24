@@ -1,5 +1,5 @@
 //SCTP Server
-#include "common.h"
+#include "common.hpp"
 #include "SctpServerEndpoint.hpp"
 #include <memory>
 #include <iostream>

@@ -14,8 +14,7 @@ worker::worker()
     logger->info("worker constructed!");
 
     io_multi = std::make_shared<IoMultiplex>(logger);
-
-    master_endpoint = std::make_unique<DomainSocketClientEndpoint>(MASTER_WORKER_SOCKET_NAME, logger);
+    master_endpoint = std::make_unique<DomainSocketClientEndpoint>(MASTER_WORKER_SOCKET_NAME, io_multi, logger);
 }
 
 worker::~worker()
@@ -26,7 +25,7 @@ worker::~worker()
 void worker::process()
 {
     //io_multi.Poll();
-    master_endpoint->send_msg();
+    //master_endpoint->send_msg();
         
     logger->info("hello!");
 }

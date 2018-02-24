@@ -4,23 +4,26 @@
 master::master(std::vector<int> workers): 
         isMasterTerminated(false), workers_pid(workers)
 {
+    //Init logger
     logger = spdlog::basic_logger_mt("master", "./log/master.txt");
     logger->set_pattern("[%n][%P][%t][%l] %v");
 
     logger->info("master construct {}!", getpid());
 
-    test_endpoint   = std::make_unique<DomainSocketClientEndpoint>(TEST_MASTER_SOCKET_NAME, logger);
-    io_multi        = std::make_shared<IoMultiplex>(logger);
+    // init io multi
+    io_multi        = std::make_shared<IoMultiplex>(logger);    
+    test_endpoint   = std::make_unique<DomainSocketClientEndpoint>(TEST_MASTER_SOCKET_NAME, io_multi, logger);
+    test_endpoint->register_handler([this](std::vector<char> msg){msg_handler(msg);});
 
     if(workers_pid.size() > 0)
     {
         //Create an ednpoint for communication with workers
+        logger->info("{} Workers created, start worker endpoint!", workers_pid.size());
         worker_endpoint = std::make_unique<DomainSocketServerEndpoint>(MASTER_WORKER_SOCKET_NAME, io_multi, logger);
     }
     else
     {
-        worker_endpoint = std:null_ptr;
-        // No worker is created, master is ready. Indicate Test framwork
+        worker_endpoint = NULL;
         indicate_test_framework();
     }
 }
@@ -28,35 +31,6 @@ master::master(std::vector<int> workers):
 master::~master()
 {
 }
-
-void master::indicate_test_framework()
-{
-    test_endpoint.send_msg();
-}
-
-void master::ready()
-{
-    while(worker_endpoint->get_client_num() < workers_pid.size())
-    {
-        io_multi->Poll();
-    }
-}
-
-
-void master::prepare()
-{
-    //Wait until all the workers ready
-    ready();
-    logger->info("workers are all ready");
-
-    //create sctp endpoint
-    sctp_endpoint = std::make_unique<SctpServerEndpoint>("127.0.0.1", MY_PORT_NUM, io_multi, logger);
-}
-
-void master::send_terminate_to_client()
-{
-}
-
 
 void master::run()
 {
@@ -72,29 +46,47 @@ void master::run()
     wait_until_workers_closed();
 }
 
-void master::process()
-{   
-    logger->info("{} workers are created", workers_pid.size());
 
-    prepare();
+void master::msg_handler(std::vector<char> msg)
+{
+    internal_msg msg_recv;
+    std::memcpy(&msg_recv, msg.data(), msg.size());
 
-    //Wait for SCTP connection request
-    int i = 2;
-    while(i--)
+    logger->info("Master msg_handler recv msg id/pid(%d, %x)\n", msg_recv.header.msg_id, msg_recv.master_ready.master_pid);
+
+    switch(msg_recv.header.msg_id)
     {
-        printf("[evan],start poll, %x\n", io_multi);
-
-        sleep(1);
-        io_multi->Poll();
+        case WORKER_READY_MSG_ID:
+            
+            break;
+        case MASTER_TERMINATE_MSG_ID:
+            logger->info("Master is termincated!");
+            isMasterTerminated = true;
+            break;
+        default:
+            
+            break;
     }
 
-    //Indicate workers to close
-    send_terminate_to_client();
+}
 
-    //wait    
-    wait_until_workers_closed();
-    
-    return;
+void master::indicate_test_framework()
+{
+    internal_msg msg;
+    msg.header.msg_id = MASTER_READY_MSG_ID;
+    msg.master_ready.master_pid = getpid();
+
+    std::vector<char> serial_msg;
+
+    serial_msg.resize(sizeof(msg));
+    std::memcpy(serial_msg.data(), &msg, sizeof(msg));    
+    test_endpoint->send_msg(serial_msg);
+
+    logger->info("Master is ready, indicate test case!");
+}
+
+void master::send_terminate_to_client()
+{
 }
 
 void master::wait_until_workers_closed()
@@ -119,8 +111,3 @@ void master::wait_until_workers_closed()
     return;
 }
 
-
-void master::add_worker(int pid)
-{
-    workers_pid.push_back(pid);
-}
