@@ -18,15 +18,15 @@
 
 class SctpSocketOperation{
 public:
-	SctpSocketOperation();
-	~SctpSocketOperation();
-	void SetSocketOpt();
-	void Bind(std::string localIp, uint32_t port);
-	auto socket_fd() { return sock_fd; }
-	std::unique_ptr<SctpMessageEnvelope> Receive(int sock_fd);
+    SctpSocketOperation();
+    ~SctpSocketOperation();
+    void SetSocketOpt();
+    void Bind(std::string localIp, uint32_t port);
+    auto socket_fd() { return sock_fd; }
+    std::unique_ptr<SctpMessageEnvelope> Receive(int sock_fd);
 
 private:
-	int sock_fd{-1};
+    int sock_fd{-1};
 };
 
 

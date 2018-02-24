@@ -1,5 +1,5 @@
 
-include_directories(../include)
+include_directories(../include ../spdlog/include)
 
 set(SOURCES
 	SctpServerEndpoint.cpp

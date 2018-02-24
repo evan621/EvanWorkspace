@@ -10,23 +10,25 @@
 #include <errno.h>
 #include <string.h>
 #include "IoMultiplex.hpp"
+#include "spdlog/spdlog.h"
 
 
 
 class DomainSocketClientEndpoint
 {
 public:
-	DomainSocketClientEndpoint(const char *servername);
-	~DomainSocketClientEndpoint();
-	
-	void send_msg();
+    DomainSocketClientEndpoint(const char *servername, std::shared_ptr<spdlog::logger> logger);
+    ~DomainSocketClientEndpoint();
+    
+    void send_msg();
 private:
-	int listen_fd;
-	int conn_fd;
-	//IoMultiplex& io_multi;
-	
-	int domain_connect(const char *servername);
-	void domain_close();
+    int listen_fd;
+    int conn_fd;
+    std::shared_ptr<spdlog::logger> logger;
+    //IoMultiplex& io_multi;
+    
+    int domain_connect(const char *servername);
+    void domain_close();
 };
 
 

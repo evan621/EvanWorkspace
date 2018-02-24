@@ -1,7 +1,0 @@
-/home/evan/Desktop/EvanWorkspace/sctp_socket/thundering_herd/build/CMakeFiles/edit_cache.dir
-/home/evan/Desktop/EvanWorkspace/sctp_socket/thundering_herd/build/CMakeFiles/rebuild_cache.dir
-/home/evan/Desktop/EvanWorkspace/sctp_socket/thundering_herd/build/CMakeFiles/loadAndTest.dir
-/home/evan/Desktop/EvanWorkspace/sctp_socket/thundering_herd/build/CMakeFiles/server.dir
-/home/evan/Desktop/EvanWorkspace/sctp_socket/thundering_herd/build/comm/CMakeFiles/edit_cache.dir
-/home/evan/Desktop/EvanWorkspace/sctp_socket/thundering_herd/build/comm/CMakeFiles/rebuild_cache.dir
-/home/evan/Desktop/EvanWorkspace/sctp_socket/thundering_herd/build/comm/CMakeFiles/common.dir

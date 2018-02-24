@@ -1,1 +1,0 @@
-/usr/bin/c++      CMakeFiles/loadAndTest.dir/test.cpp.o  -o loadAndTest comm/libcommon.a -lsctp 
