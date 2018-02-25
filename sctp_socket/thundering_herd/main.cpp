@@ -16,7 +16,7 @@ int spawn_worker_process()
     {
         case 0:
         {
-            printf("[Worker/PID: %d]: New worker created by Parent (%d). \n", getpid(), getppid());
+            printf("New worker(%d) created by Parent (%d). \n", getpid(), getppid());
             auto newWorker = std::make_unique<worker>();
             newWorker->process();
             sleep(2);
@@ -34,17 +34,20 @@ int spawn_worker_process()
 }
 
 int main()
-{   
-    auto master_proc = std::make_unique<master>();
+{  
+    std::vector<int> workers_pid;
     
-    printf("[Master/PID: %d]: Master Start! \n", getpid());
+    printf("Master(%d) Start! \n", getpid());
     for (int i = 0; i < PROCESS_NUM; i++)
     {
         int worker_pid = spawn_worker_process();
-        
-        master_proc->add_worker(worker_pid);
+        workers_pid.push_back(worker_pid);
     }
+
+
+    auto master_proc = std::make_unique<master>();
     
+    master_proc->add_workers(workers_pid);
     master_proc->process();
     
     return 0;

@@ -96,7 +96,8 @@ int SctpServerEndpoint::onSctpNotification(std::unique_ptr<SctpMessageEnvelope> 
 			switch(sctpAssociationChange->sac_state)
 			{
 			case SCTP_COMM_UP:
-				printf("[Server]: Assoc change, COMMUNICATION UP! ClientAddr{ IP/Port(%s:%d) }\n", msg->peerIp()->c_str(),  msg->peerPort());
+				printf("[Server]: Assoc change(ID=0x%x), COMMUNICATION UP!\n", sctpAssociationChange->sac_assoc_id);
+				printf("[Server]: New ClientAddr{ IP/Port(%s:%d) }\n", msg->peerIp()->c_str(),  msg->peerPort());
 				
 				assoInfo = std::make_unique<AssociationInfo>();
 				assoInfo->ip 	 = msg->peerIp();
@@ -135,9 +136,13 @@ int SctpServerEndpoint::onSctpNotification(std::unique_ptr<SctpMessageEnvelope> 
 
 int SctpServerEndpoint::onSctpMessages(std::unique_ptr<SctpMessageEnvelope> msg)
 {
+	std::string msgpayload{msg->payloadData()};
+
+	
 	assoInfo->stream = msg->peerStream();
-	printf("[Server]: SCTP message('') received from IP/Port(%s:%d) on assoc(0x%x) / stream(%d)\n ", 
+	printf("[Server]: SCTP message('%s') received from IP/Port(%s:%d) on assoc(0x%x) / stream(%d)\n ", 
 			//*message,
+			msgpayload.c_str(),
 			msg->peerIp()->c_str(),
 			msg->peerPort(),
 			msg->associcationId(),
@@ -158,13 +163,11 @@ void SctpServerEndpoint::SendMsg()
 	clientAddr.sin_port = htons(assoInfo->port);
 	clientAddr.sin_addr.s_addr = inet_addr(assoInfo->ip->c_str());
 	
-	std::string message;
-	unsigned int rd_sz = 20;
-	
+	std::string message;	
 	std::cout << "[Server]: Input the message echo to client: " << std::endl;
 	std::cin >> message;
 	
-	sctp_sendmsg(sock_op->socket_fd(), message.c_str(), rd_sz, 
+	sctp_sendmsg(sock_op->socket_fd(), message.c_str(), MAX_BUFFER, 
 				(sockaddr *) &clientAddr, sizeof(sockaddr_in), 
 				0, 0, assoInfo->stream,    //SCTP_EOF
 				0, 0);	

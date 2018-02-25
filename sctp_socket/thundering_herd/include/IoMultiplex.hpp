@@ -12,7 +12,7 @@ typedef std::function<void(int fd)> CallBack;
 class IoMultiplex
 {
 public:
-    IoMultiplex(std::shared_ptr<spdlog::logger> logger):logger(logger){}
+    IoMultiplex(std::shared_ptr<spdlog::logger> logger):logger(logger){logger->info("IoMultiplex construct");}
     ~IoMultiplex(){}
     
     void RegisterFd(int fd, CallBack cb);

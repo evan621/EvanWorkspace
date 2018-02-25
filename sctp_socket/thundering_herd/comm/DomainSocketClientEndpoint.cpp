@@ -4,6 +4,8 @@
 DomainSocketClientEndpoint::DomainSocketClientEndpoint(const char *servername, std::shared_ptr<spdlog::logger> logger):
     logger(logger)
 {
+    logger->info("DomainSocketClientEndpoint construct");
+
     conn_fd = domain_connect(servername);
     if(conn_fd<0)
     {
@@ -24,7 +26,7 @@ int DomainSocketClientEndpoint::domain_connect(const char *servername)
     {
     return(-1);
     }
-    logger->info("Create new client domain socket: {}!", fd);
+    logger->info("Client domain socket create: {}!", fd);
 
 
     int len, rval;
@@ -42,7 +44,7 @@ int DomainSocketClientEndpoint::domain_connect(const char *servername)
     } 
     else
     {
-        logger->info("New client domain socket bind to {}!", un.sun_path);
+        logger->info("Client domain socket bind to {}!", un.sun_path);
 
         /* fill socket address structure with server's address */
         memset(&un, 0, sizeof(un)); 
@@ -57,7 +59,7 @@ int DomainSocketClientEndpoint::domain_connect(const char *servername)
         } 
         else
         {
-            logger->info("New client domain socket connect to {}!", un.sun_path);
+            logger->info("Client domain socket connect to {}!", un.sun_path);
 
             return (fd);
         }

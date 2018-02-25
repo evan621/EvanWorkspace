@@ -6,6 +6,9 @@
 #include "spdlog/spdlog.h"
 #include <memory>
 
+#include "common.h"
+#include "DomainSocketClientEndpoint.hpp"
+
 class worker
 {
 public:
@@ -16,6 +19,8 @@ public:
 private:
     std::shared_ptr<IoMultiplex> io_multi;
     std::shared_ptr<spdlog::logger> logger;
+
+    std::unique_ptr<DomainSocketClientEndpoint> master_endpoint;
 };
 
 #endif

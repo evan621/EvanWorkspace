@@ -1,5 +1,5 @@
 
-#define MAX_BUFFER	256
+#define MAX_BUFFER	512
 
 #define MY_PORT_NUM	18002
 

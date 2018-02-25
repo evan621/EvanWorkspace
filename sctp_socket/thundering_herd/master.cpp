@@ -6,24 +6,47 @@ master::master()
     logger = spdlog::basic_logger_mt("master", "./log/master.txt");
     logger->set_pattern("[%n][%P][%t][%l] %v");
 
-    domain_endpoint = std::make_unique<DomainSocketClientEndpoint>(TEST_MASTER_SOCKET_NAME, logger);
-    io_multi = std::make_shared<IoMultiplex>(logger);
+    logger->info("master construct {}!", getpid());
+
+    test_endpoint   = std::make_unique<DomainSocketClientEndpoint>(TEST_MASTER_SOCKET_NAME, logger);
+    io_multi        = std::make_shared<IoMultiplex>(logger);
+    worker_endpoint = std::make_unique<DomainSocketServerEndpoint>(MASTER_WORKER_SOCKET_NAME, io_multi, logger);
 }
 
 master::~master()
 {
 }
 
+void master::ready()
+{
+    while(worker_endpoint->get_client_num() < workers_pid.size())
+    {
+        io_multi->Poll();
+    }
+}
+
+
+void master::prepare()
+{
+    //Wait until all the workers ready
+    ready();
+    logger->info("workers are all ready");
+
+    //create sctp endpoint
+    sctp_endpoint = std::make_unique<SctpServerEndpoint>("127.0.0.1", MY_PORT_NUM, io_multi, logger);
+}
+
+void master::send_terminate_to_client()
+{
+}
 
 void master::process()
 {   
     logger->info("{} workers are created", workers_pid.size());
-    
-    endpoint = std::make_unique<SctpServerEndpoint>("127.0.0.1", MY_PORT_NUM, io_multi, logger);
 
-    //Wait until all the workers ready
-    
-    
+    prepare();
+
+    //Wait for SCTP connection request
     int i = 2;
     while(i--)
     {
@@ -32,9 +55,11 @@ void master::process()
         sleep(1);
         io_multi->Poll();
     }
-    
-    printf("[evan],end poll\n");
-    
+
+    //Indicate workers to close
+    send_terminate_to_client();
+
+    //wait    
     wait_until_workers_closed();
     
     return;

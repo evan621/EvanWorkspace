@@ -11,6 +11,7 @@
 
 std::shared_ptr<IoMultiplex> io_multi;
 std::shared_ptr<spdlog::logger> logger;
+std::unique_ptr<DomainSocketServerEndpoint> test_endpoint;
 
 
 void start_sut()
@@ -35,6 +36,14 @@ void indicate_master_to_quit()
 {
 }
 
+void ready()
+{
+    while(test_endpoint->get_client_num() != 1)
+    {
+        io_multi->Poll();
+    }
+}
+
 void test_case_proc(int pid)
 {
     printf("[test]: start the test case!\n");
@@ -43,17 +52,24 @@ void test_case_proc(int pid)
     logger->set_pattern("[%n][%P][%t][%l] %v");
     
     io_multi = std::make_shared<IoMultiplex>(logger);
-    auto domain_endpoint = std::make_unique<DomainSocketServerEndpoint>(TEST_MASTER_SOCKET_NAME, io_multi, logger);
-    
+    test_endpoint = std::make_unique<DomainSocketServerEndpoint>(TEST_MASTER_SOCKET_NAME, io_multi, logger);
+
+    printf("[test]: wait for sut ready...!\n");
     // wait for the connection request from SUT process.
-    domain_endpoint->ready();
+    ready();
+
     
+    printf("[test]: Start test case...!\n");
     // run test case
     test_case();
+
     
+    printf("[test]: Indicate sut to quit...!\n");
     // Indicate SUT to quit
     indicate_master_to_quit();
+
     
+    printf("[test]: Wait sut to quit...!\n");
     // Wait sut to quit
     int status;
     if(wait(&status) == pid)

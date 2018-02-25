@@ -2,8 +2,10 @@
 
 
 DomainSocketServerEndpoint::DomainSocketServerEndpoint(const char *servername, std::shared_ptr<IoMultiplex> multiRecv, std::shared_ptr<spdlog::logger> logger): 
-    io_multi(multiRecv), listen_fd(0), conn_fd(0), isEndPointReady(false), logger(logger)
+    io_multi(multiRecv), listen_fd(0), conn_fd(0), logger(logger)
 {
+    logger->info("DomainSocketServerEndpoint construct");
+
     domain_listen(servername);
     
     io_multi->RegisterFd(listen_fd, [this](int sock_fd) 
@@ -22,14 +24,15 @@ DomainSocketServerEndpoint::~DomainSocketServerEndpoint()
     domain_close();
 }
 
+/*
 void DomainSocketServerEndpoint::ready()
 {
-    while(!isEndPointReady)
+    while((max_client_num != 0)&&(!isEndPointReady))
     {
         io_multi->Poll();
     }
 }
-
+*/
 
 int DomainSocketServerEndpoint::domain_listen(const char *servername)
 { 
@@ -56,7 +59,7 @@ int DomainSocketServerEndpoint::domain_listen(const char *servername)
     } 
     else
     {
-        logger->info("Domain Socket Server Created! Bind to: {}", un.sun_path);
+        logger->info("Server Domain Socket Created! Bind to: {}", un.sun_path);
 
         // Listen
         if (listen(listen_fd, MAX_CONNECTION_NUMBER) < 0)    
@@ -65,7 +68,7 @@ int DomainSocketServerEndpoint::domain_listen(const char *servername)
         }
         else
         {
-            logger->info("Domain Socket Server Listen to: {}", listen_fd);
+            logger->info("Server Domain Socket Listen to: {}", listen_fd);
             return 0;
         }
     }
@@ -83,6 +86,7 @@ int DomainSocketServerEndpoint::domain_accept()
 { 
     socklen_t len; 
     sockaddr_un un;
+    struct stat statbuf; 
     len = sizeof(un); 
 
     if ((conn_fd = accept(listen_fd, (sockaddr *)&un, &len)) < 0) 
@@ -90,19 +94,22 @@ int DomainSocketServerEndpoint::domain_accept()
         return -1;     
     }
 
+    /* obtain the client's uid from its calling address */ 
+    len -= offsetof(struct sockaddr_un, sun_path);  /* len of pathname */
+    un.sun_path[len] = 0; /* null terminate */ 
+    stat(un.sun_path, &statbuf);
+
+    logger->info("un.sun_path after accept, {}, {}, {}!\n", un.sun_path, len, statbuf.st_uid);
+
     io_multi->RegisterFd(conn_fd, [this](int sock_fd) 
                         {   
-                            if(conn_fd != listen_fd)
-                            {
-                                logger->info("wrong conn fd!");
-                                return;
-                            }
-                            domain_receive();
-                        } );    
+                            domain_receive(sock_fd);
+                        } );  
 
-    isEndPointReady = true;                 
+    client_fds.insert(std::pair<int, int>(conn_fd, statbuf.st_uid));                    
+
+    logger->info("Server Domain Socket Accept new client: conn_fd({}), client({}, {}, {})!\n", conn_fd, un.sun_path, len, statbuf.st_uid);
     
-    logger->info("Domain Socket Server Accept new client: conn_fd({}), listen_fd({})!\n", conn_fd, listen_fd);
     return 0;
 }
 
@@ -121,19 +128,25 @@ void DomainSocketServerEndpoint::domain_close()
     }    
 }
 
-void DomainSocketServerEndpoint::domain_receive()
+void DomainSocketServerEndpoint::domain_receive(int sock_fd)
 {
+    logger->info("Message recevied from {} with fd {}", client_fds.at(sock_fd), sock_fd);
     int size;
     char rvbuf[2048];
     size = recv(conn_fd, rvbuf, 2047, 0);   
-    if(size>=0)
+    if(size>0)
     {
         // rvbuf[size]='\0';
-        logger->info("Domain Socket Server Recieved Data[{}]{}...{}\n",size,rvbuf[0],rvbuf[size-1]);
+        logger->info("Server Domain Socket Recieved Data[{}]{}...{}\n",size,rvbuf[0],rvbuf[size-1]);
     }
     else if(size==-1)
     {
         logger->info("Error[%d] when recieving Data:{}.\n",errno,strerror(errno));     
+    }
+    else
+    {
+        logger->error("message size is 0");
+        exit(0);
     }
 
 }

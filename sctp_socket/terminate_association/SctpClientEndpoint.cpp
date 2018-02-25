@@ -44,7 +44,7 @@ void SctpClientEndpoint::ReadUserCmd(int fd)
 	switch(buf)
 	{
 		case '0':
-			std::cout << "[Client]: Exit server!" << std::endl; 
+			std::cout << "[Client]: Exit Client!" << std::endl; 
 			continuepoll = false;
 			break;
 		case '1':
@@ -90,7 +90,7 @@ int SctpClientEndpoint::SctpMsgHandler(int sock_fd)
 
 int SctpClientEndpoint::onSctpNotification(std::unique_ptr<SctpMessageEnvelope> msg)
 {
-	printf("[Server]: Notification received!\n");
+	printf("[Client]: Notification received!\n");
 	
 	sctp_notification* notification = (sctp_notification*)msg->payloadData();
 
@@ -102,29 +102,30 @@ int SctpClientEndpoint::onSctpNotification(std::unique_ptr<SctpMessageEnvelope> 
 			switch(sctpAssociationChange->sac_state)
 			{
 			case SCTP_COMM_UP:
-				printf("[Server]: Assoc change, COMMUNICATION UP! ClientAddr{ IP/Port(%s:%d) }\n", msg->peerIp()->c_str(),  msg->peerPort());
+				printf("[Client]: Assoc change(ID=0x%x), COMMUNICATION UP!\n", sctpAssociationChange->sac_assoc_id);
+				printf("[Client]: New ClientAddr{ IP/Port(%s:%d) }\n", msg->peerIp()->c_str(),  msg->peerPort());
 
 				break;
 			case SCTP_COMM_LOST:
-				printf("[Server]: Assoc change(ID=%x), COMMUNICATION LOST\n", sctpAssociationChange->sac_assoc_id);
+				printf("[Client]: Assoc change(ID=0x%x), COMMUNICATION LOST\n", sctpAssociationChange->sac_assoc_id);
 				break;
 			case SCTP_RESTART:
-				printf("[Server]: Assoc change(ID=%x), SCTP RESTART\n", sctpAssociationChange->sac_assoc_id);
+				printf("[Client]: Assoc change(ID=0x%x), SCTP RESTART\n", sctpAssociationChange->sac_assoc_id);
 				break;
 			case SCTP_SHUTDOWN_COMP:
-				printf("[Server]: Assoc change(ID=%x), SHUTDOWN COMPLETE\n", sctpAssociationChange->sac_assoc_id);
+				printf("[Client]: Assoc change(ID=0x%x), SHUTDOWN COMPLETE\n", sctpAssociationChange->sac_assoc_id);
 				break;
 			case SCTP_CANT_STR_ASSOC:
-				printf("[Server]: Assoc change(ID=%x), CAN'T START ASSOCIATION\n", sctpAssociationChange->sac_assoc_id);
+				printf("[Client]: Assoc change(ID=0x%x), CAN'T START ASSOCIATION\n", sctpAssociationChange->sac_assoc_id);
 				break;
 			default:
-				printf("[Server]: Assoc chagne with unknown type (0x%x)\n", sctpAssociationChange->sac_state);
+				printf("[Client]: Assoc chagne with unknown type (0x%x)\n", sctpAssociationChange->sac_state);
 				break;
 			}
 			break;
 		}
 		default:
-			printf("[Server]: Other Notification: (0x%x)\n", notification->sn_header.sn_type);
+			printf("[Client]: Other Notification: (0x%x)\n", notification->sn_header.sn_type);
 			break;
 	}
 
@@ -135,8 +136,10 @@ int SctpClientEndpoint::onSctpNotification(std::unique_ptr<SctpMessageEnvelope> 
 
 int SctpClientEndpoint::onSctpMessages(std::unique_ptr<SctpMessageEnvelope> msg)
 {
-	printf("[Client]: SCTP message('') received from IP/Port(%s:%d) on assoc(0x%x) / stream(%d)\n ", 
-			//*(msg->payloadData()),
+	std::string msgpayload{msg->payloadData()};
+	
+	printf("[Client]: SCTP message('%s') received from IP/Port(%s:%d) on assoc(0x%x) / stream(%d)\n ", 
+			msgpayload.c_str(),
 			msg->peerIp()->c_str(),
 			msg->peerPort(),
 			msg->associcationId(),
@@ -148,7 +151,7 @@ int SctpClientEndpoint::onSctpMessages(std::unique_ptr<SctpMessageEnvelope> msg)
 void SctpClientEndpoint::SendMsg()
 {
 	//std::string message;
-	char message[20];
+	char message[MAX_BUFFER+1];
 	struct sctp_sndrcvinfo sinfo;
 	struct sockaddr_in servaddr;
 	
@@ -169,17 +172,17 @@ void SctpClientEndpoint::SendMsg()
 			printf("[Client]: Input message content!\n");
 			std::cin >> message ;
 
-			sctp_sendmsg(sock_op->socket_fd(), message, 20, 
+			sctp_sendmsg(sock_op->socket_fd(), message, MAX_BUFFER, 
 					(sockaddr *)&servaddr, sizeof(servaddr), 0, 0, stream, 0, 0);
 			break;
 		}
 		case 0:
-			sctp_sendmsg(sock_op->socket_fd(), message, 20, 
+			sctp_sendmsg(sock_op->socket_fd(), message, MAX_BUFFER, 
 					(sockaddr *)&servaddr, sizeof(servaddr), 0, SCTP_ABORT, stream, 0, 0);
 			printf("[Client]: Send ABORT!\n");
 			break;
 		case 2:
-			sctp_sendmsg(sock_op->socket_fd(), message, 20, 
+			sctp_sendmsg(sock_op->socket_fd(), message, MAX_BUFFER, 
 					(sockaddr *)&servaddr, sizeof(servaddr), 0, SCTP_EOF, stream, 0, 0);
 			printf("[Client]: Send EOF!\n");
 			break;

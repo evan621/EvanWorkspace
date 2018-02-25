@@ -17,5 +17,5 @@
 #define TMP_DIR "./tmp"
 #define LOG_DIR "./log"
 #define TEST_MASTER_SOCKET_NAME "./tmp/test_master.sock"
-#define MAIN_WORKER_SOCKET_NAME "./tmp/main_worker.sock"
+#define MASTER_WORKER_SOCKET_NAME "./tmp/master_worker.sock"
 
