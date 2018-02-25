@@ -10,6 +10,7 @@ DomainSocketClientEndpoint::DomainSocketClientEndpoint(const char *servername, s
     if(conn_fd<0)
     {
         logger->info("Error[%d] when connecting...",errno);
+        exit(0)
     }
 }
 
@@ -24,9 +25,10 @@ int DomainSocketClientEndpoint::domain_connect(const char *servername)
     /*socket*/
     if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0)    /* create a UNIX domain stream socket */ 
     {
-    return(-1);
+        logger->error("Client Domain Socket create failed!");
+        return(-1);
     }
-    logger->info("Client domain socket create: {}!", fd);
+    logger->info("Client Domain Socket create success: {}!", fd);
 
 
     int len, rval;
@@ -40,6 +42,7 @@ int DomainSocketClientEndpoint::domain_connect(const char *servername)
     //bind
     if (bind(fd, (struct sockaddr *)&un, len) < 0)
     { 
+        logger->error("Client Domain Socket bind failed!");
         rval=  -2; 
     } 
     else
@@ -55,6 +58,7 @@ int DomainSocketClientEndpoint::domain_connect(const char *servername)
         /*connect*/
         if (connect(fd, (struct sockaddr *)&un, len) < 0) 
         {
+            logger->error("Client Domain Socket connect failed!");
             rval= -4; 
         } 
         else

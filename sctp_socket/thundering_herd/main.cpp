@@ -44,11 +44,9 @@ int main()
         workers_pid.push_back(worker_pid);
     }
 
-
-    auto master_proc = std::make_unique<master>();
+    auto master_proc = std::make_unique<master>(workers_pid);
     
-    master_proc->add_workers(workers_pid);
-    master_proc->process();
+    master_proc->run();
     
     return 0;
 }

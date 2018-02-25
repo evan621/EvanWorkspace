@@ -25,7 +25,7 @@ private:
     int listen_fd;
     int conn_fd;
     std::shared_ptr<spdlog::logger> logger;
-    //IoMultiplex& io_multi;
+    std::shared_ptr<IoMultiplex> io_multi;
     
     int domain_connect(const char *servername);
     void domain_close();

@@ -19,12 +19,10 @@
 class master
 {
 public:
-    master();
+    master(std::vector<int> workers);
     ~master();
     
-    void process();
-    void add_worker(int pid);
-    void add_workers(std::vector<int> pid_vec){workers_pid = pid_vec;}
+    void run();
 private:
     void wait_until_workers_closed();
     void prepare();
@@ -39,6 +37,8 @@ private:
     
     std::shared_ptr<spdlog::logger> logger;
     std::shared_ptr<IoMultiplex> io_multi;
+
+    bool isMasterTerminated; 
 
 };
 

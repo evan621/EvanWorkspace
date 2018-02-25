@@ -1,7 +1,8 @@
 #include "master.hpp"
 #include <sys/wait.h>
 
-master::master()
+master::master(std::vector<int> workers): 
+        isMasterTerminated(false), workers_pid(workers)
 {
     logger = spdlog::basic_logger_mt("master", "./log/master.txt");
     logger->set_pattern("[%n][%P][%t][%l] %v");
@@ -10,11 +11,27 @@ master::master()
 
     test_endpoint   = std::make_unique<DomainSocketClientEndpoint>(TEST_MASTER_SOCKET_NAME, logger);
     io_multi        = std::make_shared<IoMultiplex>(logger);
-    worker_endpoint = std::make_unique<DomainSocketServerEndpoint>(MASTER_WORKER_SOCKET_NAME, io_multi, logger);
+
+    if(workers_pid.size() > 0)
+    {
+        //Create an ednpoint for communication with workers
+        worker_endpoint = std::make_unique<DomainSocketServerEndpoint>(MASTER_WORKER_SOCKET_NAME, io_multi, logger);
+    }
+    else
+    {
+        worker_endpoint = std:null_ptr;
+        // No worker is created, master is ready. Indicate Test framwork
+        indicate_test_framework();
+    }
 }
 
 master::~master()
 {
+}
+
+void master::indicate_test_framework()
+{
+    test_endpoint.send_msg();
 }
 
 void master::ready()
@@ -38,6 +55,21 @@ void master::prepare()
 
 void master::send_terminate_to_client()
 {
+}
+
+
+void master::run()
+{
+    while(!isMasterTerminated)
+    {
+        io_multi->Poll();
+    }
+
+    //Indicate workers to close
+    send_terminate_to_client();
+
+    //wait    
+    wait_until_workers_closed();
 }
 
 void master::process()
