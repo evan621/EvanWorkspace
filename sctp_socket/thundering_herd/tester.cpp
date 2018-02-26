@@ -7,18 +7,36 @@ tester::tester(): continue_poll(true)
 
     io_multi = std::make_shared<IoMultiplex>(logger);
     test_endpoint = std::make_unique<DomainSocketServerEndpoint>(TEST_MASTER_SOCKET_NAME, io_multi, logger);
-
     test_endpoint->register_handler([this](std::vector<char> msg) 
                         { test_msg_handler(msg); });
+
+    io_multi->RegisterFd(STDIN, [this](int fd) 
+                        {  ReadUserCmd(fd); } );
 }
 
 tester::~tester()
 {}
 
+void tester::ReadUserCmd(int fd)
+{
+    char buf;  
+    read(fd, &buf, sizeof(buf));
+    switch(buf)
+    {
+        case '0':
+            printf("[TEST]: Exit test! \n"); 
+            continue_poll = false;
+            break;
+        default:
+            printf("[TEST]: Unrecognized command!\n");
+            break;
+    }
+}
+
 
 void tester::run()
 {
-    printf("[test]: start the test case!\n");
+    printf("[TEST]: start the test case!\n");
     
     while(continue_poll)
     {
@@ -31,7 +49,7 @@ void tester::run()
 
 void tester::terminate()
 {
-    printf("[test]: Indicate sut to quit...!\n");
+    printf("[TEST]: Indicate sut to quit...!\n");
     // Indicate SUT to quit
     indicate_sut_to_quit();
 
@@ -39,7 +57,7 @@ void tester::terminate()
     int status;
     if(wait(&status))
     {
-        printf("[test]: the sut quit\n");
+        printf("[TEST]: the sut quit\n");
     }
 }
 
@@ -65,7 +83,7 @@ void tester::indicate_sut_to_quit()
     serial_msg.resize(sizeof(msg));
     std::memcpy(serial_msg.data(), &msg, sizeof(msg));
 
-    printf("Indicate sut to quit\n");
+    printf("[TEST] Indicate sut to quit\n");
     test_endpoint->publish_msg(serial_msg);
 }
 
@@ -75,8 +93,8 @@ void tester::test_msg_handler(std::vector<char> msg)
 
     std::memcpy(&msg_recv, msg.data(), msg.size());
 
-    printf("[Test] recv_msg size(%d) id/pid(%d, %x)\n", 
+    printf("[TEST] recv_msg size(%d) id/pid(%d, %x)\n", 
                 msg.size(), msg_recv.header.msg_id, msg_recv.master_ready.master_pid);
 
-    continue_poll = false;
+    //continue_poll = false;
 }

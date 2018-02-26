@@ -16,6 +16,7 @@ public:
     ~IoMultiplex(){}
     
     void RegisterFd(int fd, CallBack cb);
+    void DeRegisterFd(int fd);
     void Poll();
     
 private:

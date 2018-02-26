@@ -12,7 +12,6 @@
 #include "DomainSocketServerEndpoint.hpp"
 #include "spdlog/spdlog.h"
 #include "common.hpp"
-#include "Dispatcher.hpp"
 
 class tester
 {
@@ -27,7 +26,8 @@ private:
     std::shared_ptr<spdlog::logger> logger;
     std::unique_ptr<DomainSocketServerEndpoint> test_endpoint;
     bool continue_poll;
-
+    
+    void ReadUserCmd(int fd);
     void terminate();
     void test_case();
     void indicate_sut_to_quit();

@@ -17,9 +17,10 @@ SctpServerEndpoint::SctpServerEndpoint(std::string localIp, std::uint32_t port, 
                 {   
                     SctpMsgHandler(sock_fd);
                 } );  
-  
+
     logger->info("Server Start and bind to addr({}:{})", localIp.c_str(), port);
 }
+
 
 SctpServerEndpoint::~SctpServerEndpoint()
 { 

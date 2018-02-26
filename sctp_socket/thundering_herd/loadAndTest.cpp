@@ -8,7 +8,6 @@
 #include "DomainSocketServerEndpoint.hpp"
 #include "spdlog/spdlog.h"
 #include "common.hpp"
-#include "Dispatcher.hpp"
 #include "tester.hpp"
 
 void start_sut()

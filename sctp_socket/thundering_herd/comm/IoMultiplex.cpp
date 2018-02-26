@@ -11,6 +11,20 @@ void IoMultiplex::RegisterFd(int fd, CallBack cb)
     cb_lists.push_back(std::move(cb));
 }
 
+
+void IoMultiplex::DeRegisterFd(int fd)
+{
+    for (auto i = 0; i < poll_items.size(); i++)
+    {
+        if(poll_items.at(i).fd == fd)
+        {
+            poll_items.erase(poll_items.begin()+i);
+            cb_lists.erase(cb_lists.begin()+i);
+            return;
+        }
+    }
+}
+
 void IoMultiplex::PollEventHandler()
 {
     for(auto i = 0; i < poll_items.size(); i++)

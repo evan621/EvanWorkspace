@@ -139,9 +139,9 @@ void DomainSocketServerEndpoint::domain_receive(int sock_fd)
     }
     else
     {
-        logger->error("message size is 0");
+        logger->error("message size is 0, the connection to fd({}) lost", sock_fd);
+        io_multi->DeRegisterFd(sock_fd);
         return;
-        //exit(0);
     }
 
     std::vector<char> recv_msg(rvbuf, rvbuf + size);
