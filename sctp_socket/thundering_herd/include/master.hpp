@@ -27,10 +27,10 @@ private:
     void wait_until_workers_closed();
     void prepare();
     void send_terminate_to_client();
-    void ready();
+    void master_ready_forwork();
     void indicate_test_framework();
     void msg_handler(std::vector<char> msg);
-
+    
 
     std::unique_ptr<SctpEndpoint> sctp_endpoint;
     std::unique_ptr<DomainSocketClientEndpoint> test_endpoint;

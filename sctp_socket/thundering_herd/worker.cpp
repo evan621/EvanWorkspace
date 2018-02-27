@@ -8,8 +8,12 @@ worker::worker()
 {
     std::string worker_name = "worker";
     std::string file_name = "./log/" + worker_name + std::to_string(getpid()) + ".txt";
-    logger = spdlog::basic_logger_mt(worker_name, file_name);
+    unlink(file_name.c_str());
+    logger = spdlog::rotating_logger_mt(worker_name, file_name, 1024*1024, 1);
     logger->set_pattern("[%n][%P][%t][%l] %v");
+
+    // flush the log if any
+    logger->flush();
     
     logger->info("worker constructed!");
 

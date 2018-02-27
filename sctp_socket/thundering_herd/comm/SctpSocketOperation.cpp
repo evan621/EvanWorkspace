@@ -103,7 +103,6 @@ std::unique_ptr<SctpMessageEnvelope> SctpSocketOperation::Receive(int sock_fd)
     if(-1 == sctp_recvmsg(sock_fd, readBuf, MAX_BUFFER,
                          (struct sockaddr *)&cliaddr, &len, &sri, &msg_flags))
     {       
-        printf("[Server]: Error when sctp_recvmsg: %s\n", strerror(errno));
         return nullptr;
     }
         

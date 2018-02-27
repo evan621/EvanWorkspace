@@ -4,11 +4,12 @@
 master::master(std::vector<int> workers): 
         isMasterTerminated(false), workers_pid(workers)
 {
-    //Init logger
-    logger = spdlog::basic_logger_mt("master", "./log/master.txt");
+    //Init logger(rotating log, max size is 1MB, 1 file)
+    unlink("./log/master.txt");
+    logger = spdlog::rotating_logger_mt("master", "./log/master.txt", 1024*1024, 1);
     logger->set_pattern("[%n][%P][%t][%l] %v");
 
-    logger->info("master construct {}!", getpid());
+    logger->info("master constructed {}!", getpid());
 
     // init io multi
     io_multi        = std::make_shared<IoMultiplex>(logger);    
@@ -24,7 +25,7 @@ master::master(std::vector<int> workers):
     else
     {
         worker_endpoint = NULL;
-        indicate_test_framework();
+        master_ready_forwork();
     }
 }
 
@@ -70,6 +71,17 @@ void master::msg_handler(std::vector<char> msg)
 
 }
 
+void master::master_ready_forwork()
+{
+    //start SCTP server endpoint, waiting for request
+    std::string serverIP("127.0.0.1");
+    logger->info("master create SCTP server, bind to {}:{}!", serverIP.c_str(), MY_PORT_NUM);
+    sctp_endpoint = std::make_unique<SctpServerEndpoint>(serverIP, MY_PORT_NUM, io_multi, logger);
+
+    // Tell test framework sut is ready
+    indicate_test_framework();
+}
+
 void master::indicate_test_framework()
 {
     internal_msg msg;
@@ -77,12 +89,12 @@ void master::indicate_test_framework()
     msg.master_ready.master_pid = getpid();
 
     std::vector<char> serial_msg;
-
     serial_msg.resize(sizeof(msg));
     std::memcpy(serial_msg.data(), &msg, sizeof(msg));    
-    test_endpoint->send_msg(serial_msg);
 
-    logger->info("Master is ready, indicate test case!");
+    logger->info("Master is ready, indicate test framework!");
+
+    test_endpoint->send_msg(serial_msg);
 }
 
 void master::send_terminate_to_client()
