@@ -33,8 +33,8 @@ int SctpServerEndpoint::SctpMsgHandler(int sock_fd)
 
     if(nullptr == msg)
     {
-        logger->info("Error when receive on fd");
-        return -1;
+        logger->error("Error when receive on fd {}", sock_fd);
+        exit(0);
     }
 
     if((msg->flags())&MSG_NOTIFICATION) 
@@ -49,7 +49,7 @@ int SctpServerEndpoint::SctpMsgHandler(int sock_fd)
 
 int SctpServerEndpoint::onSctpNotification(std::unique_ptr<SctpMessageEnvelope> msg)
 {
-  logger->info("Notification received!");
+  logger->info("SCTP Notification received!");
   
   sctp_notification* notification = (sctp_notification*)msg->payloadData();
       

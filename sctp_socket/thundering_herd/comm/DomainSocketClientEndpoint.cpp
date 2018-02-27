@@ -59,10 +59,10 @@ int DomainSocketClientEndpoint::domain_connect(const char *servername)
     /*socket*/
     if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0)    /* create a UNIX domain stream socket */ 
     {
-        logger->error("Client Domain Socket create failed!");
+        logger->error("Domain Socket Client create failed!");
         return(-1);
     }
-    logger->info("Client Domain Socket create success: {}!", fd);
+    logger->info("Domain Socket Client create success with fd({})!", fd);
 
 
     int len, rval;
@@ -76,12 +76,12 @@ int DomainSocketClientEndpoint::domain_connect(const char *servername)
     //bind
     if (bind(fd, (struct sockaddr *)&un, len) < 0)
     { 
-        logger->error("Client Domain Socket bind failed!");
+        logger->error("Domain Socket Client bind failed!");
         rval=  -2; 
     } 
     else
     {
-        logger->info("Client domain socket bind to {}!", un.sun_path);
+        logger->info("Domain Socket Client bind to {}!", un.sun_path);
 
         /* fill socket address structure with server's address */
         memset(&un, 0, sizeof(un)); 
@@ -92,12 +92,12 @@ int DomainSocketClientEndpoint::domain_connect(const char *servername)
         /*connect*/
         if (connect(fd, (struct sockaddr *)&un, len) < 0) 
         {
-            logger->error("Client Domain Socket connect failed!");
+            logger->error("Domain Socket Client connect failed!");
             rval= -4; 
         } 
         else
         {
-            logger->info("Client domain socket connect to {}!", un.sun_path);
+            logger->info("Domain Socket Client connect to {}!", un.sun_path);
 
             return (fd);
         }
@@ -117,10 +117,9 @@ void DomainSocketClientEndpoint::send_msg(std::vector<char> msg)
 {    
     int size = send(conn_fd, (char *)msg.data(), msg.size(), 0);
 
-    if (size >= 0)
+    if (size < 0)
     {
-        printf("Client Msg send(%d), size(%d)", getpid(), size);
-        logger->info("Data[{}] Sended:{}.\n",size,msg.data()[0]);
+        logger->error("Msg send to domain socket({}} failed!\n", conn_fd);
     }
 }
 

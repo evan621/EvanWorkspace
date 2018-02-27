@@ -20,6 +20,8 @@
 SctpClientEndpoint::SctpClientEndpoint(std::shared_ptr<IoMultiplex> multiRecv, std::shared_ptr<spdlog::logger> logger): 
     io_multi(multiRecv), logger(logger)
 {
+    logger->info("SCTP Client construct!");
+
     sock_op = std::make_unique<SctpSocketOperation>();
     sock_op->SetSocketOpt();
 
@@ -31,7 +33,7 @@ SctpClientEndpoint::SctpClientEndpoint(std::shared_ptr<IoMultiplex> multiRecv, s
 SctpClientEndpoint::~SctpClientEndpoint()
 {
     // close socket;
-    logger->info("Close Client!");
+    logger->info("SCTP Client destruct!");
 }
 
 int SctpClientEndpoint::SctpMsgHandler(int sock_fd)
@@ -57,7 +59,7 @@ int SctpClientEndpoint::SctpMsgHandler(int sock_fd)
 
 int SctpClientEndpoint::onSctpNotification(std::unique_ptr<SctpMessageEnvelope> msg)
 {
-  logger->info("[Server]: Notification received!");
+  logger->info("SCTP Notification received!");
   
   sctp_notification* notification = (sctp_notification*)msg->payloadData();
 
@@ -129,5 +131,10 @@ void SctpClientEndpoint::SendMsg()
 
     sctp_sendmsg(sock_op->socket_fd(), message, 20, 
                   (sockaddr *)&servaddr, sizeof(servaddr), 0, 0, stream, 0, 0);
+}
+
+void SctpClientEndpoint::SendMsg(std::vector<char> msg)
+{
+    
 }
 

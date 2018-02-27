@@ -28,14 +28,11 @@ private:
     int onSctpMessages(std::unique_ptr<SctpMessageEnvelope> msg);
     int SctpMsgHandler(int sock_fd);
 
-    void ReadUserCmd(int fd);
-
     std::unique_ptr<SctpSocketOperation> sock_op;
     std::shared_ptr<IoMultiplex> io_multi;
     SctpNotification notification;
-        
-    std::shared_ptr<spdlog::logger> logger;
 
+    std::shared_ptr<spdlog::logger> logger;
 };
 
 #endif

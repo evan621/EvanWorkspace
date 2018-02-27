@@ -2,7 +2,9 @@
 
 tester::tester(): continue_poll(true)
 {
-    logger = spdlog::basic_logger_mt("test", "./log/test.txt");
+    unlink("./log/test.txt");
+
+    logger = spdlog::rotating_logger_mt("test", "./log/test.txt", 1024*1024, 1);
     logger->set_pattern("[%n][%P][%t][%l] %v");
 
     io_multi = std::make_shared<IoMultiplex>(logger);
@@ -27,6 +29,9 @@ void tester::ReadUserCmd(int fd)
             printf("[TEST]: Exit test! \n"); 
             continue_poll = false;
             break;
+        case '1':
+            printf("[TEST]: Start test case!");
+            test_case();
         default:
             printf("[TEST]: Unrecognized command!\n");
             break;
