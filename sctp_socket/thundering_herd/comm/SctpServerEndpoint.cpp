@@ -9,11 +9,9 @@
 SctpServerEndpoint::SctpServerEndpoint(std::string localIp, std::uint32_t port, std::shared_ptr<IoMultiplex> multiRecv, std::shared_ptr<spdlog::logger> logger): 
   assoInfo(nullptr), io_multi(multiRecv), logger(logger)
 {
-    sock_op = std::make_unique<SctpSocketOperation>();
-    sock_op->SetSocketOpt();
-    sock_op->Bind(localIp, port);
+    sctp_socket = std::make_unique<SctpSocket>(localIp, port, SERVER_SCTP_SOCKET);
       
-    io_multi->RegisterFd(sock_op->socket_fd(), [this](int sock_fd) 
+    io_multi->RegisterFd(sctp_socket->socket_fd(), [this](int sock_fd) 
                 {   
                     SctpMsgHandler(sock_fd);
                 } );  
@@ -29,7 +27,7 @@ SctpServerEndpoint::~SctpServerEndpoint()
 
 int SctpServerEndpoint::SctpMsgHandler(int sock_fd)
 {
-    std::unique_ptr<SctpMessageEnvelope> msg = sock_op->Receive(sock_fd);
+    std::unique_ptr<SctpMessageEnvelope> msg = sctp_socket->read();
 
     if(nullptr == msg)
     {
@@ -131,8 +129,13 @@ void SctpServerEndpoint::SendMsg()
   std::cout << "[Server]: Input the message echo to client: " << std::endl;
   std::cin >> message;
   
-  sctp_sendmsg(sock_op->socket_fd(), message.c_str(), rd_sz, 
+  sctp_sendmsg(sctp_socket->socket_fd(), message.c_str(), rd_sz, 
         (sockaddr *) &clientAddr, sizeof(sockaddr_in), 
         0, 0, assoInfo->stream,    //SCTP_EOF
         0, 0);  
+}
+
+void SctpServerEndpoint::SendMsg()
+{
+    
 }

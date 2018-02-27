@@ -9,6 +9,7 @@
 #include "SctpMessage.hpp"
 #include <unistd.h>
 #include "spdlog/spdlog.h"
+#include "ScptSocket.hpp"
 
 
 struct AssociationInfo{
@@ -31,7 +32,8 @@ private:
     
     int SctpMsgHandler(int sock_fd);
 
-    std::unique_ptr<SctpSocketOperation> sock_op;
+    //std::unique_ptr<SctpSocketOperation> sock_op;
+    std::unique_ptr<SctpSocket> sctp_socket;
     std::shared_ptr<IoMultiplex> io_multi;
     
     //std::map<unsigned int, AssociationInfo> association_list;
