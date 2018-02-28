@@ -126,8 +126,6 @@ void DomainSocketServerEndpoint::domain_receive(int sock_fd)
     char rvbuf[MAX_BUFFER];
     size = recv(sock_fd, rvbuf, MAX_BUFFER, 0);  
     
-    printf("Server Msg receive(%d), size(%d)\n", getpid(), size);
-
     if(size>0)
     {
         // rvbuf[size]='\0';

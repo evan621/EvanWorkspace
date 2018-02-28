@@ -11,16 +11,12 @@
 #include "tester.hpp"
 
 void start_sut()
-{
-    printf("[test]:start the sut!\n");
-    
+{    
     execlp("./server", NULL);
 }
 
 void prepare_test_env()
 {
-    std::cout << "Prepare the Test env!" << std::endl;
-
     if(access(TMP_DIR, 0) != 0) 
     {
         if(0 == mkdir(TMP_DIR, 0777))
@@ -49,8 +45,6 @@ void prepare_test_env()
 
 void start_test()
 {
-    printf("[Test]: START TEST!\n");
-
     tester test;
     test.run();
 }

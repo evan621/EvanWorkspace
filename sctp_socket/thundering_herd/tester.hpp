@@ -26,12 +26,14 @@ private:
     std::shared_ptr<spdlog::logger> logger;
     std::unique_ptr<DomainSocketServerEndpoint> test_endpoint;
     bool continue_poll;
+    bool is_sut_ready;
     
     void ReadUserCmd(int fd);
     void terminate();
     void test_case();
     void indicate_sut_to_quit();
     void test_msg_handler(std::vector<char> msg);
+    void print_instruct();
 };
 
 #endif

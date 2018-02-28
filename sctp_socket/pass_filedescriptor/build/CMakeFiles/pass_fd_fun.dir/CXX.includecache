@@ -1,0 +1,30 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/evan/Desktop/EvanWorkspace/sctp_socket/pass_filedescriptor/pass_fd.cpp
+errno.h
+-
+string.h
+-
+iostream
+-
+sys/types.h
+-
+sys/socket.h
+-
+sys/types.h
+-
+sys/stat.h
+-
+fcntl.h
+-
+stdio.h
+-
+unistd.h
+-
+

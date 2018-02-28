@@ -37,7 +37,6 @@ int main()
 {  
     std::vector<int> workers_pid;
     
-    printf("Master(%d) Start! \n", getpid());
     for (int i = 0; i < PROCESS_NUM; i++)
     {
         int worker_pid = spawn_worker_process();

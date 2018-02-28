@@ -11,22 +11,21 @@
 #include <string.h>
 #include <poll.h>
 #include <functional>
-#include "SctpSocketOperation.hpp"
+#include "SctpSocket.hpp"
 #include <stdio.h>
 
 
 //#define ENABLE_ALL_NOTIFICATION
 
-SctpClientEndpoint::SctpClientEndpoint(std::shared_ptr<IoMultiplex> multiRecv, std::shared_ptr<spdlog::logger> logger): 
+SctpClientEndpoint::SctpClientEndpoint(std::string targetIp, std::uint32_t port, std::shared_ptr<IoMultiplex> multiRecv, std::shared_ptr<spdlog::logger> logger): 
     io_multi(multiRecv), logger(logger)
 {
     logger->info("SCTP Client construct!");
 
-    sock_op = std::make_unique<SctpSocketOperation>();
-    sock_op->SetSocketOpt();
+    sctp_socket = std::make_unique<SctpSocket>(targetIp, port, CLIENT_SCTP_SOCKET, logger);
 
     // register fd
-    io_multi->RegisterFd(sock_op->socket_fd(), [this](int fd)
+    io_multi->RegisterFd(sctp_socket->socket_fd(), [this](int fd)
                                       { SctpMsgHandler(fd); });
 }
 
@@ -38,7 +37,7 @@ SctpClientEndpoint::~SctpClientEndpoint()
 
 int SctpClientEndpoint::SctpMsgHandler(int sock_fd)
 {
-  std::unique_ptr<SctpMessageEnvelope> msg = sock_op->Receive(sock_fd);
+  std::unique_ptr<SctpMessageEnvelope> msg = sctp_socket->read();
   
   if(nullptr == msg)
   {
@@ -112,7 +111,12 @@ int SctpClientEndpoint::onSctpMessages(std::unique_ptr<SctpMessageEnvelope> msg)
       msg->peerStream());
   return 0;
 }
+void SctpClientEndpoint::SendMsg(std::vector<char> msg)
+{
+    sctp_socket->write(std::move(msg));
+}
 
+/*
 void SctpClientEndpoint::SendMsg()
 {
     //std::string message;
@@ -132,9 +136,7 @@ void SctpClientEndpoint::SendMsg()
     sctp_sendmsg(sock_op->socket_fd(), message, 20, 
                   (sockaddr *)&servaddr, sizeof(servaddr), 0, 0, stream, 0, 0);
 }
+*/
 
-void SctpClientEndpoint::SendMsg(std::vector<char> msg)
-{
-    
-}
+
 

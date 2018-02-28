@@ -14,6 +14,9 @@
 #include <netinet/in.h>
 #include <netinet/sctp.h>
 #include <errno.h>
+#include <string.h>
+#include <iostream>
+#include "spdlog/spdlog.h"
 
 
 #define SERVER_SCTP_SOCKET 80
@@ -22,18 +25,22 @@
 class SctpSocket
 {
 public:
-    SctpSocket(std::string localIp, uint32_t port, int socketType);
-    SctpSocket(int fd);
+    SctpSocket(std::string localIp, uint32_t port, int socketType, std::shared_ptr<spdlog::logger> logger);
+    SctpSocket(int fd, std::shared_ptr<spdlog::logger> logger);
     ~SctpSocket();
     
-    int accept();
+    int sctp_accept();
     std::unique_ptr<SctpMessageEnvelope> read();
-    void write();
+    void write(std::vector<char> msg);
     int socket_fd(){return sock_fd;}
 private:
     int sock_fd;
-    
-    void connect();
+    std::shared_ptr<spdlog::logger> logger;
+
+    void connect(std::string localIp, uint32_t port);
+    void sctp_create();
+    void setSocketOpt();
+    void bindAndListenTo(std::string localIp, uint32_t port);
 };
 
 

@@ -9,13 +9,14 @@
 SctpServerEndpoint::SctpServerEndpoint(std::string localIp, std::uint32_t port, std::shared_ptr<IoMultiplex> multiRecv, std::shared_ptr<spdlog::logger> logger): 
   assoInfo(nullptr), io_multi(multiRecv), logger(logger)
 {
-    sctp_socket = std::make_unique<SctpSocket>(localIp, port, SERVER_SCTP_SOCKET);
+    sctp_socket_listen = std::make_unique<SctpSocket>(localIp, port, SERVER_SCTP_SOCKET, logger);
       
-    io_multi->RegisterFd(sctp_socket->socket_fd(), [this](int sock_fd) 
+    io_multi->RegisterFd(sctp_socket_listen->socket_fd(), [this](int sock_fd) 
                 {   
                     SctpMsgHandler(sock_fd);
                 } );  
 
+    //socket_tab.insert(std::pair<int, std::unique_ptr<SctpSocket>>(sctp_socket->socket_fd(), std::move(sctp_socket)))
     logger->info("Server Start and bind to addr({}:{})", localIp.c_str(), port);
 }
 
@@ -27,21 +28,39 @@ SctpServerEndpoint::~SctpServerEndpoint()
 
 int SctpServerEndpoint::SctpMsgHandler(int sock_fd)
 {
-    std::unique_ptr<SctpMessageEnvelope> msg = sctp_socket->read();
+    if(sock_fd == sctp_socket_listen->socket_fd())
+    {
+        //logger->error("SctpServerEndpoint, SctpMsgHandler with error fd")
+        //return;
+        int conn_sock_fd = sctp_socket_listen->sctp_accept();
 
-    if(nullptr == msg)
-    {
-        logger->error("Error when receive on fd {}", sock_fd);
-        exit(0);
-    }
+        logger->info("New SCTP client connected with fd {}!", conn_sock_fd);
 
-    if((msg->flags())&MSG_NOTIFICATION) 
-    {
-        return onSctpNotification(std::move(msg));
+        sctp_socket_conn = std::make_unique<SctpSocket>(conn_sock_fd, logger);
+
+        io_multi->RegisterFd(sctp_socket_conn->socket_fd(), [this](int sock_fd) 
+                    {   
+                        SctpMsgHandler(sock_fd);
+                    } );  
     }
-    else
+    else if (sock_fd == sctp_socket_conn->socket_fd())
     {
-        return onSctpMessages(std::move(msg));
+        std::unique_ptr<SctpMessageEnvelope> msg = sctp_socket_conn->read();
+
+        if(nullptr == msg)
+        {
+            logger->error("Error when receive on fd {}", sock_fd);
+            exit(0);
+        }
+
+        if((msg->flags())&MSG_NOTIFICATION) 
+        {
+            return onSctpNotification(std::move(msg));
+        }
+        else
+        {
+            return onSctpMessages(std::move(msg));
+        }
     }
 }
 
@@ -76,6 +95,8 @@ int SctpServerEndpoint::onSctpNotification(std::unique_ptr<SctpMessageEnvelope> 
         logger->info("Assoc change(ID=0x{}), SCTP RESTART\n", sctpAssociationChange->sac_assoc_id);
         break;
       case SCTP_SHUTDOWN_COMP:
+        // deregister from the poll
+        io_multi->DeRegisterFd(sctp_socket_conn->socket_fd());
         logger->info("Assoc change(ID=0x{}), SHUTDOWN COMPLETE\n", sctpAssociationChange->sac_assoc_id);
         break;
       case SCTP_CANT_STR_ASSOC:
@@ -100,8 +121,9 @@ int SctpServerEndpoint::onSctpNotification(std::unique_ptr<SctpMessageEnvelope> 
 int SctpServerEndpoint::onSctpMessages(std::unique_ptr<SctpMessageEnvelope> msg)
 {
   assoInfo->stream = msg->peerStream();
-  logger->info("SCTP message('{}') received from IP/Port({}:{}) on assoc(0x{}) / stream({})\n ", 
+  logger->info("SCTP message('{}'), size({}) received from IP/Port({}:{}) on assoc(0x{}) / stream({})\n ", 
       msg->payloadData(),
+      msg->getPayload().size(),
       msg->peerIp()->c_str(),
       msg->peerPort(),
       msg->associcationId(),
@@ -110,6 +132,12 @@ int SctpServerEndpoint::onSctpMessages(std::unique_ptr<SctpMessageEnvelope> msg)
   return 0;
 }
 
+void SctpServerEndpoint::SendMsg(std::vector<char> msg)
+{
+    sctp_socket_conn->write(std::move(msg));
+}
+
+/*
 void SctpServerEndpoint::SendMsg()
 {
   if(nullptr == assoInfo)
@@ -134,8 +162,5 @@ void SctpServerEndpoint::SendMsg()
         0, 0, assoInfo->stream,    //SCTP_EOF
         0, 0);  
 }
+*/
 
-void SctpServerEndpoint::SendMsg()
-{
-    
-}

@@ -1,6 +1,6 @@
 #include "SctpEndpoint.hpp"
 #include "SctpNotification.hpp"
-#include "SctpSocketOperation.hpp"
+#include "SctpSocket.hpp"
 #include "IoMultiplex.hpp"
 #include <string>
 #include <stdint.h>
@@ -9,7 +9,6 @@
 #include "SctpMessage.hpp"
 #include <unistd.h>
 #include "spdlog/spdlog.h"
-#include "ScptSocket.hpp"
 
 
 struct AssociationInfo{
@@ -23,7 +22,7 @@ class SctpServerEndpoint: public SctpEndpoint
 public:
     SctpServerEndpoint(std::string localIp, std::uint32_t port, std::shared_ptr<IoMultiplex> , std::shared_ptr<spdlog::logger> logger);
     ~SctpServerEndpoint();
-    void SendMsg();
+    void SendMsg(std::vector<char> msg);
 
 private:
     int onSctpNotification(std::unique_ptr<SctpMessageEnvelope> msg);
@@ -33,7 +32,8 @@ private:
     int SctpMsgHandler(int sock_fd);
 
     //std::unique_ptr<SctpSocketOperation> sock_op;
-    std::unique_ptr<SctpSocket> sctp_socket;
+    std::unique_ptr<SctpSocket> sctp_socket_listen;
+    std::unique_ptr<SctpSocket> sctp_socket_conn;
     std::shared_ptr<IoMultiplex> io_multi;
     
     //std::map<unsigned int, AssociationInfo> association_list;

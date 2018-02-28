@@ -1,11 +1,12 @@
 #include "SctpSocket.hpp"
 
 
-SctpSocket::SctpSocket(std::string localIp, uint32_t port, int socketType)
+SctpSocket::SctpSocket(std::string localIp, uint32_t port, int socketType, std::shared_ptr<spdlog::logger> logger):
+    logger(logger)
 {
     // Socket works as server, one to one
     // create socket
-    create();
+    sctp_create();
     //set the socket option.
     setSocketOpt();
 
@@ -19,13 +20,13 @@ SctpSocket::SctpSocket(std::string localIp, uint32_t port, int socketType)
             connect(localIp, port);
             break;
         default:
-            printf("error socket type");
+            logger->error("error socket type");
             break;
     }
     
 }
 
-SctpSocket::SctpSocket(int fd):sock_fd(fd)
+SctpSocket::SctpSocket(int fd, std::shared_ptr<spdlog::logger> logger):sock_fd(fd), logger(logger)
 {
     // Create a SctpSocket with a given fd
 }
@@ -37,28 +38,27 @@ SctpSocket::~SctpSocket()
 }
 
 
-int SctpSocket::accept()
+int SctpSocket::sctp_accept()
 {
     int len = sizeof(struct sockaddr_in);
     struct sockaddr_in client_addr;
     int conn_sockfd;
 
-    printf("[Server]: Awaiting a new connection\n");
-    conn_sockfd = accept(sock_fd, (struct sockaddr*)&client_addr, &len);
+    conn_sockfd = accept(sock_fd, (struct sockaddr*)&client_addr, (socklen_t *)&len);
     
-    printf("[Server]: Connection Established\n");
+    logger->info("New SCTP Connection Established");
     
     return conn_sockfd;
 }
 
 
-int SctpSocket::create()
+void SctpSocket::sctp_create()
 {
     sock_fd = socket( AF_INET, SOCK_STREAM, IPPROTO_SCTP );
 
     if(sock_fd < 0){
         //std::cout <<  << strerror(errno) << std::endl;
-        printf("[Server]: Created Socket failed with errono: %s\n", strerror(errno));
+        logger->error("Created Socket failed with errono: {}", strerror(errno));
         exit(0);
     }
 }
@@ -77,7 +77,7 @@ void SctpSocket::connect(std::string localIp, uint32_t port)
 
     if(-1 != sctp_connectx(sock_fd, (struct sockaddr *)&servaddr, 1, &assoc_id))
     {
-        printf("[Client]: Connection established, id = %x\n", assoc_id);
+        logger->info("STCP Connection established, assoc id = {}", assoc_id);
         return;
     }
 }
@@ -105,11 +105,11 @@ void SctpSocket::setSocketOpt()
     if(-1 == setsockopt(sock_fd, IPPROTO_SCTP, SCTP_EVENTS, &evnts, sizeof(evnts)))
     {
         //std::cout << "[Server]: Error setsockopt(IPPROTO_SCTP): " << strerror(errno) << std::endl;
-        printf("Error setsockopt(IPPROTO_SCTP): %s\n", strerror(errno));
+        logger->error("Error setsockopt(IPPROTO_SCTP): {}\n", strerror(errno));
     }
-    
+
+    /*
     sctp_initmsg initmsg;
-    sctp_event_subscribe evnts;  
     
     // Specify that a maximum of 5 streams will be available per socket 
     memset( &initmsg, 0, sizeof(initmsg) );
@@ -122,7 +122,7 @@ void SctpSocket::setSocketOpt()
       std::cout << "error setsocketopt IPPROTO_SCTP: " << strerror(errno) << std::endl;
       return;
     }
-    
+    */
 }
 
 void SctpSocket::bindAndListenTo(std::string localIp, uint32_t port)
@@ -139,13 +139,13 @@ void SctpSocket::bindAndListenTo(std::string localIp, uint32_t port)
     // replace bind with sctp_bindx
     if(-1 == sctp_bindx( sock_fd, (struct sockaddr *)&servaddr, addr_count,  SCTP_BINDX_ADD_ADDR))
     {
-        printf("sctp_bindx failed with errorno: %s\n", strerror(errno));
+        logger->error("sctp_bindx failed with errorno: {}", strerror(errno));
 
     }
     
     if (-1 == listen( sock_fd, LISTEN_QUEUE))
     {
-        printf("listen failed with errorno: %s\n", strerror(errno));
+        logger->error("listen failed with errorno: {}", strerror(errno));
     }
 }
 
@@ -167,10 +167,10 @@ std::unique_ptr<SctpMessageEnvelope> SctpSocket::read()
     if(-1 == sctp_recvmsg(sock_fd, readBuf, MAX_BUFFER,
                          (struct sockaddr *)&cliaddr, &len, &sri, &msg_flags))
     {       
-        printf("[Server]: Error when sctp_recvmsg: %s\n", strerror(errno));
+        logger->error("[Server]: Error when sctp_recvmsg: {}", strerror(errno));
         return nullptr;
     }
-        
+
     std::vector<char> buf(readBuf, readBuf + sizeof(readBuf));
     std::unique_ptr<SctpMessageEnvelope> msg = std::make_unique<SctpMessageEnvelope>(buf, &cliaddr, &sri, msg_flags);
     

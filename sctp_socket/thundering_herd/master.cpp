@@ -53,7 +53,7 @@ void master::msg_handler(std::vector<char> msg)
     internal_msg msg_recv;
     std::memcpy(&msg_recv, msg.data(), msg.size());
 
-    logger->info("Master msg_handler recv msg id/pid(%d, %x)\n", msg_recv.header.msg_id, msg_recv.master_ready.master_pid);
+    logger->info("Master msg_handler recv msg id/pid({}, {})\n", msg_recv.header.msg_id, msg_recv.master_ready.master_pid);
 
     switch(msg_recv.header.msg_id)
     {
@@ -115,7 +115,6 @@ void master::wait_until_workers_closed()
         {
             workers_pid.erase(it);
             logger->info("Worker stop with pid {}, Remain worker, {}!", pid, workers_pid.size());
-
         }
     }   
     logger->info("Master Stop! \n");

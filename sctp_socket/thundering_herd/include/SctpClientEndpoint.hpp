@@ -11,24 +11,24 @@
 #include <memory>
 #include <thread>
 #include "SctpMessage.hpp"
-#include "SctpSocketOperation.hpp"
+#include "SctpSocket.hpp"
 #include "spdlog/spdlog.h"
 
 
 class SctpClientEndpoint: public SctpEndpoint
 {
 public:
-    SctpClientEndpoint(std::shared_ptr<IoMultiplex> multiRecv, std::shared_ptr<spdlog::logger> logger);
+    SctpClientEndpoint(std::string targetIp, std::uint32_t port, std::shared_ptr<IoMultiplex> multiRecv, std::shared_ptr<spdlog::logger> logger);
     ~SctpClientEndpoint();
 
-    void SendMsg();
+    void SendMsg(std::vector<char> msg);
     
 private:
     int onSctpNotification(std::unique_ptr<SctpMessageEnvelope> msg);
     int onSctpMessages(std::unique_ptr<SctpMessageEnvelope> msg);
     int SctpMsgHandler(int sock_fd);
 
-    std::unique_ptr<SctpSocketOperation> sock_op;
+    std::unique_ptr<SctpSocket> sctp_socket;
     std::shared_ptr<IoMultiplex> io_multi;
     SctpNotification notification;
 

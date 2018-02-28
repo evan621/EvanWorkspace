@@ -1,6 +1,6 @@
 #include "tester.hpp"
 
-tester::tester(): continue_poll(true)
+tester::tester(): continue_poll(true), is_sut_ready(false)
 {
     unlink("./log/test.txt");
 
@@ -26,23 +26,36 @@ void tester::ReadUserCmd(int fd)
     switch(buf)
     {
         case '0':
-            printf("[TEST]: Exit test! \n"); 
             continue_poll = false;
             break;
         case '1':
-            printf("[TEST]: Start test case!");
-            test_case();
+            if(!is_sut_ready)
+            {
+                printf("SUT is not ready, wait...\n");
+                sleep(2);
+            }
+            else
+            {
+                printf("Start test...\n");
+                test_case();
+                printf("Test end!\n");
+            }
+            
+            print_instruct();
         default:
-            printf("[TEST]: Unrecognized command!\n");
             break;
     }
 }
 
-
-void tester::run()
+void tester::print_instruct()
 {
-    printf("[TEST]: start the test case!\n");
-    
+    printf("[0]: Enter 0 to to exit!\n");
+    printf("[1]: Enter 1 to to test!\n");
+}
+void tester::run()
+{    
+    printf("Start! Wait SUT ready...\n");
+
     while(continue_poll)
     {
         io_multi->Poll();
@@ -69,13 +82,17 @@ void tester::terminate()
 
 void tester::test_case()
 {
-    auto sctp_endpoint = std::make_unique<SctpClientEndpoint>(io_multi, logger);
+    auto sctp_endpoint = std::make_unique<SctpClientEndpoint>("127.0.0.1", MY_PORT_NUM, io_multi, logger);
 
-    sctp_endpoint->SendMsg();
+    std::string hello = "helloworld!";
+    std::vector<char> msg(hello.begin(), hello.end());
     
+    sctp_endpoint->SendMsg(msg);
+
+    /*
     sleep(2);
     
-    sctp_endpoint->SendMsg();
+    sctp_endpoint->SendMsg(msg);*/
 }
 
 void tester::indicate_sut_to_quit()
@@ -98,8 +115,16 @@ void tester::test_msg_handler(std::vector<char> msg)
 
     std::memcpy(&msg_recv, msg.data(), msg.size());
 
-    printf("[TEST] recv_msg size(%d) id/pid(%d, %x)\n", 
-                msg.size(), msg_recv.header.msg_id, msg_recv.master_ready.master_pid);
+    switch(msg_recv.header.msg_id)
+    {
+        case(MASTER_READY_MSG_ID):
+            printf("SUT is ready!\n");
+            is_sut_ready = true;
+            print_instruct();
+            break;
+        default:
+            logger->error("Received unknown message from domain socket!");
+            break;
+    }
 
-    //continue_poll = false;
 }

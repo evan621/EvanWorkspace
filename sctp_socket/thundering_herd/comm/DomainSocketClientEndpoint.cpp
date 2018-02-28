@@ -21,7 +21,7 @@ DomainSocketClientEndpoint::DomainSocketClientEndpoint(const char *servername, s
 
 void DomainSocketClientEndpoint::domain_receive(int sock_fd)
 {
-    logger->info("Message recevied with fd {}", sock_fd);
+    logger->info("Server Domain Socket, Message recevied with fd {}", sock_fd);
     int size;
     char rvbuf[MAX_BUFFER];
     size = recv(sock_fd, rvbuf, MAX_BUFFER, 0);   

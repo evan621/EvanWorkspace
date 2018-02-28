@@ -17,6 +17,7 @@ public:
         if(clientAddr->sin_family != AF_INET)
         {
             printf("[sock add]: Not a Internet addr!\n");
+            exit(0);
         }
         
         char ip[20];
