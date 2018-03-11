@@ -29,7 +29,7 @@ using namespace std;
  * @note socket should be (PF_UNIX, SOCK_DGRAM)
  */
 int sendfd(int socket, int fd) {
-    char dummy = '$';
+    char dummy[1] = {1};
     struct msghdr msg;
     struct iovec iov;
 
@@ -55,6 +55,8 @@ int sendfd(int socket, int fd) {
 
     int ret = sendmsg(socket, &msg, 0);
 
+	printf("sendmsg, size, %d\n", ret);
+	
     if (ret == -1) {
         LOGE("sendmsg failed with %s", strerror(errno));
     }
@@ -73,12 +75,13 @@ int sendfd(int socket, int fd) {
 int recvfd(int socket) {
     int len;
     int fd;
-    char buf[1];
+    char buf[5];
     struct iovec iov;
     struct msghdr msg;
     struct cmsghdr *cmsg;
-    char cms[CMSG_SPACE(sizeof(int))];
-
+    //char cms[CMSG_SPACE(sizeof(int))];
+	char cms[CMSG_SPACE(10)];
+	
     iov.iov_base = buf;
     iov.iov_len = sizeof(buf);
 
@@ -92,6 +95,13 @@ int recvfd(int socket) {
 
     len = recvmsg(socket, &msg, 0);
 
+//	printf("recvmsg, controllen, %d\n", msg.msg_controllen);
+
+	printf("recvmsg, len: %d, iov: %d, (%d, %d, %d, %d, %d)\n", len, iov.iov_len, 
+				buf[0], buf[1], buf[2], buf[3], buf[4]);
+
+	printf("recvmsg, controllen, %d, %d\n", msg.msg_controllen, sizeof(cms));
+
     if (len < 0) {
         LOGE("recvmsg failed with %s", strerror(errno));
         return -1;
@@ -104,6 +114,7 @@ int recvfd(int socket) {
 
     cmsg = CMSG_FIRSTHDR(&msg);
     memmove(&fd, CMSG_DATA(cmsg), sizeof(int));
+		
     return fd;
 }
 
@@ -133,7 +144,7 @@ int main() {
 
     cout << "started..." << endl;
 
-    if (socketpair(PF_UNIX, SOCK_DGRAM, 0, pair) < 0) {
+    if (socketpair(AF_LOCAL, SOCK_STREAM, 0, pair) < 0) {
         cout << "socketpair failed" << endl;
         return 1;
     }

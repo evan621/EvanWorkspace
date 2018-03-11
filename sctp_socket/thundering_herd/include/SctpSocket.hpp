@@ -25,22 +25,22 @@
 class SctpSocket
 {
 public:
-    SctpSocket(std::string localIp, uint32_t port, int socketType, std::shared_ptr<spdlog::logger> logger);
+    SctpSocket(std::string ip, uint32_t port, int socketType, std::shared_ptr<spdlog::logger> logger);
     SctpSocket(int fd, std::shared_ptr<spdlog::logger> logger);
     ~SctpSocket();
     
     int sctp_accept();
-    std::unique_ptr<SctpMessageEnvelope> read();
-    void write(std::vector<char> msg);
+    std::unique_ptr<SctpMessageEnvelope> sctp_read();
+    void sctp_write(std::vector<char> msg);
     int socket_fd(){return sock_fd;}
 private:
     int sock_fd;
     std::shared_ptr<spdlog::logger> logger;
 
-    void connect(std::string localIp, uint32_t port);
+    void sctp_connect(std::string ip, uint32_t port);
     void sctp_create();
-    void setSocketOpt();
-    void bindAndListenTo(std::string localIp, uint32_t port);
+    void sctp_opt_set();
+    void bind_listen_to(std::string ip, uint32_t port);
 };
 
 

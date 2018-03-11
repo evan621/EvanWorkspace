@@ -5,7 +5,7 @@
 #include <memory>
 #include "IoMultiplex.hpp"
 #include "SctpClientEndpoint.hpp"
-#include "DomainSocketServerEndpoint.hpp"
+#include "DomainSocket.hpp"
 #include "spdlog/spdlog.h"
 #include "common.hpp"
 #include "tester.hpp"

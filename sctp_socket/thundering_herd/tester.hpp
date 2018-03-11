@@ -9,9 +9,9 @@
 #include <memory>
 #include "IoMultiplex.hpp"
 #include "SctpClientEndpoint.hpp"
-#include "DomainSocketServerEndpoint.hpp"
 #include "spdlog/spdlog.h"
 #include "common.hpp"
+#include "DomainSocket.hpp"
 
 class tester
 {
@@ -24,7 +24,13 @@ public:
 private:
     std::shared_ptr<IoMultiplex> io_multi;
     std::shared_ptr<spdlog::logger> logger;
-    std::unique_ptr<DomainSocketServerEndpoint> test_endpoint;
+    std::unique_ptr<DomainSocket> test_socket_server_listen;
+    std::unique_ptr<DomainSocket> test_socket_server_connect;
+
+    std::unique_ptr<SctpClientEndpoint> sctp_endpoint;
+
+    std::vector<std::shared_ptr<SctpClientEndpoint>> sctp_endpoints;
+    
     bool continue_poll;
     bool is_sut_ready;
     
@@ -32,8 +38,9 @@ private:
     void terminate();
     void test_case();
     void indicate_sut_to_quit();
-    void test_msg_handler(std::vector<char> msg);
+    void test_msg_handler(internal_msg* msg);
     void print_instruct();
+    void sut_connect_handler();
 };
 
 #endif

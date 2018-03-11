@@ -13,7 +13,7 @@ DomainSocketClientEndpoint::DomainSocketClientEndpoint(const char *servername, s
         exit(0);
     }
 
-    io_multi->RegisterFd(conn_fd, [this](int sock_fd) 
+    io_multi->register_fd(conn_fd, [this](int sock_fd) 
                         {   
                             domain_receive(sock_fd);
                         } ); 
@@ -57,7 +57,7 @@ int DomainSocketClientEndpoint::domain_connect(const char *servername)
 { 
     int fd; 
     /*socket*/
-    if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0)    /* create a UNIX domain stream socket */ 
+    if ((fd = socket(AF_LOCAL, SOCK_STREAM, 0)) < 0)    /* create a UNIX domain stream socket */ 
     {
         logger->error("Domain Socket Client create failed!");
         return(-1);
@@ -68,7 +68,7 @@ int DomainSocketClientEndpoint::domain_connect(const char *servername)
     int len, rval;
     struct sockaddr_un un;          
     memset(&un, 0, sizeof(un));            /* fill socket address structure with our address */
-    un.sun_family = AF_UNIX; 
+    un.sun_family = AF_LOCAL; 
     sprintf(un.sun_path, "./tmp/tmp%05d.sock", getpid()); 
     len = offsetof(struct sockaddr_un, sun_path) + strlen(un.sun_path);
     unlink(un.sun_path);               /* in case it already exists */ 

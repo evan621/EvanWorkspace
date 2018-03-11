@@ -20,45 +20,66 @@
 SctpClientEndpoint::SctpClientEndpoint(std::string targetIp, std::uint32_t port, std::shared_ptr<IoMultiplex> multiRecv, std::shared_ptr<spdlog::logger> logger): 
     io_multi(multiRecv), logger(logger)
 {
-    logger->info("SCTP Client construct!");
 
     sctp_socket = std::make_unique<SctpSocket>(targetIp, port, CLIENT_SCTP_SOCKET, logger);
 
     // register fd
-    io_multi->RegisterFd(sctp_socket->socket_fd(), [this](int fd)
+    io_multi->register_fd(sctp_socket->socket_fd(), [this](int fd)
                                       { SctpMsgHandler(fd); });
+
+    logger->info("SCTP Client construct! New sockert fd: {} is created and registered.", sctp_socket->socket_fd());
+}
+
+SctpClientEndpoint::SctpClientEndpoint(std::shared_ptr<IoMultiplex> multiRecv, std::shared_ptr<spdlog::logger> logger, int fd):    
+    io_multi(multiRecv), logger(logger)
+{
+    sctp_socket = std::make_unique<SctpSocket>(fd, logger);
+
+    printf("SctpClientEndpoint(%d), Create new sctp endpoint with given fd, %d\n",getpid(), fd);
+    //sctp_socket->socket_fd()
+    io_multi->register_fd(fd, [this](int sock_fd)
+                                      { SctpMsgHandler(sock_fd); });
+
+    printf("SctpClientEndpoint(%d), Register done\n", getpid());
+
+    logger->info("SCTP Client construct! New sockert fd: {} is created and registered.", sctp_socket->socket_fd());
 }
 
 SctpClientEndpoint::~SctpClientEndpoint()
 {
     // close socket;
-    logger->info("SCTP Client destruct!");
+    // TODO: Should find a more gracefull SCTP link shutdown procedure. 
+    io_multi->deregister_fd(sctp_socket->socket_fd());
+    logger->info("SCTP Client destruct!, deregister fd: {}", sctp_socket->socket_fd());
 }
 
 int SctpClientEndpoint::SctpMsgHandler(int sock_fd)
 {
-  std::unique_ptr<SctpMessageEnvelope> msg = sctp_socket->read();
-  
-  if(nullptr == msg)
-  {
-    std::cout << "[Client]: Failed received message on socket: " << sock_fd << std::endl;
-    return -1;
-  }
-    
-  if((msg->flags())&MSG_NOTIFICATION) 
-  {
-    return onSctpNotification(std::move(msg));
-  }
-  else
-  {
-    return onSctpMessages(std::move(msg));
-  }
+    printf("SCTP message handler, %d, fd, %d\n", sock_fd, sctp_socket->socket_fd());
+    std::unique_ptr<SctpMessageEnvelope> msg = sctp_socket->sctp_read();
+
+    if(nullptr == msg)
+    {
+        std::cout << "[Client]: Failed received message on socket: " << sock_fd << std::endl;
+        return -1;
+    }
+
+    if((msg->flags())&MSG_NOTIFICATION) 
+    {
+        return onSctpNotification(std::move(msg));
+    }
+    else
+    {
+        return onSctpMessages(std::move(msg));
+    }
 }
 
 
 int SctpClientEndpoint::onSctpNotification(std::unique_ptr<SctpMessageEnvelope> msg)
 {
   logger->info("SCTP Notification received!");
+
+  printf("[Info PID = %d]: SCTP Notification receivd\n", getpid());
   
   sctp_notification* notification = (sctp_notification*)msg->payloadData();
 
@@ -113,30 +134,5 @@ int SctpClientEndpoint::onSctpMessages(std::unique_ptr<SctpMessageEnvelope> msg)
 }
 void SctpClientEndpoint::SendMsg(std::vector<char> msg)
 {
-    sctp_socket->write(std::move(msg));
+    sctp_socket->sctp_write(std::move(msg));
 }
-
-/*
-void SctpClientEndpoint::SendMsg()
-{
-    //std::string message;
-    char message[20];
-    struct sctp_sndrcvinfo sinfo;
-    struct sockaddr_in servaddr;
-
-    bzero( (void *)&servaddr, sizeof(servaddr));
-    servaddr.sin_family = AF_INET;
-    servaddr.sin_port = htons(MY_PORT_NUM);
-    servaddr.sin_addr.s_addr = inet_addr( "127.0.0.1" );
-
-    int stream = 1;
-        printf("[Client]: Input message content!\n");
-    std::cin >> message ;
-
-    sctp_sendmsg(sock_op->socket_fd(), message, 20, 
-                  (sockaddr *)&servaddr, sizeof(servaddr), 0, 0, stream, 0, 0);
-}
-*/
-
-
-

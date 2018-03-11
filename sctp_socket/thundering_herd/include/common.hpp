@@ -15,6 +15,9 @@
 
 #define TIME_OUT 10000
 
+#define MAX_CONNECTION_NUMBER 10
+
+
 #define STDIN 0
 
 //#define ENABLE_ALL_NOTIFICATION
@@ -42,17 +45,33 @@ typedef struct
     int placeholer;
 }master_terminate_msg;
 
+typedef struct
+{   
+    int msg_id;
+    int worker_pid;
+}worker_ready_msg;
+
+typedef struct
+{   
+    int msg_id;
+    int placeholder;
+}worker_terminate_msg;
+
 
 typedef union
 {
-	struct {
-		int msg_id;
-	} header;
-	master_ready_msg master_ready;
-	master_terminate_msg master_termincate;
+    struct {
+        int msg_id;
+    } header;
+    master_ready_msg        master_ready;
+    master_terminate_msg    master_termincate;
+    worker_ready_msg        worker_ready;
+    worker_terminate_msg    worker_terminate;
+    
 }internal_msg;
 
 typedef std::function<void(std::vector<char>)> DomainSocketCallBack;
+typedef std::function<void(int newfd)> newconn_handler_callbk;
 
 
 #endif

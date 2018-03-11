@@ -1,23 +1,22 @@
 #include "SctpSocket.hpp"
 
 
-SctpSocket::SctpSocket(std::string localIp, uint32_t port, int socketType, std::shared_ptr<spdlog::logger> logger):
+SctpSocket::SctpSocket(std::string ip, uint32_t port, int socketType, std::shared_ptr<spdlog::logger> logger):
     logger(logger)
 {
     // Socket works as server, one to one
-    // create socket
     sctp_create();
     //set the socket option.
-    setSocketOpt();
+    sctp_opt_set();
 
     switch(socketType)
     {
         case SERVER_SCTP_SOCKET:
             // bind to a local ip
-            bindAndListenTo(localIp, port);
+            bind_listen_to(ip, port);
             break;
         case CLIENT_SCTP_SOCKET:
-            connect(localIp, port);
+            sctp_connect(ip, port);
             break;
         default:
             logger->error("error socket type");
@@ -26,11 +25,7 @@ SctpSocket::SctpSocket(std::string localIp, uint32_t port, int socketType, std::
     
 }
 
-SctpSocket::SctpSocket(int fd, std::shared_ptr<spdlog::logger> logger):sock_fd(fd), logger(logger)
-{
-    // Create a SctpSocket with a given fd
-}
-
+SctpSocket::SctpSocket(int fd, std::shared_ptr<spdlog::logger> logger):sock_fd(fd), logger(logger){}
 
 SctpSocket::~SctpSocket()
 {
@@ -57,14 +52,15 @@ void SctpSocket::sctp_create()
     sock_fd = socket( AF_INET, SOCK_STREAM, IPPROTO_SCTP );
 
     if(sock_fd < 0){
-        //std::cout <<  << strerror(errno) << std::endl;
         logger->error("Created Socket failed with errono: {}", strerror(errno));
-        exit(0);
+
+        printf("[Err PID = %d]: Faled creating the sctp socket with errno: %s ! Exit !\n", getpid(), strerror(errno));
+        exit(-1);
     }
 }
 
 
-void SctpSocket::connect(std::string localIp, uint32_t port)
+void SctpSocket::sctp_connect(std::string ip, uint32_t port)
 {
     struct sockaddr_in servaddr;
     sctp_assoc_t  assoc_id;
@@ -73,18 +69,21 @@ void SctpSocket::connect(std::string localIp, uint32_t port)
     bzero( (void *)&servaddr, sizeof(servaddr));
     servaddr.sin_family = AF_INET;
     servaddr.sin_port = htons(port);
-    servaddr.sin_addr.s_addr = inet_addr( localIp.c_str() );
+    servaddr.sin_addr.s_addr = inet_addr( ip.c_str() );
 
     if(-1 != sctp_connectx(sock_fd, (struct sockaddr *)&servaddr, 1, &assoc_id))
     {
         logger->info("STCP Connection established, assoc id = {}", assoc_id);
+        
+        printf("[Err PID = %d]: Faled sctp_connectx sctp socket(fd = %d) to  with errno: %s ! Exit !\n", getpid(), ip.c_str(), strerror(errno));
+        exit(-1);
         return;
     }
 }
 
 
 
-void SctpSocket::setSocketOpt()
+void SctpSocket::sctp_opt_set()
 {
     struct sctp_event_subscribe evnts;  
 
@@ -106,26 +105,13 @@ void SctpSocket::setSocketOpt()
     {
         //std::cout << "[Server]: Error setsockopt(IPPROTO_SCTP): " << strerror(errno) << std::endl;
         logger->error("Error setsockopt(IPPROTO_SCTP): {}\n", strerror(errno));
-    }
 
-    /*
-    sctp_initmsg initmsg;
-    
-    // Specify that a maximum of 5 streams will be available per socket 
-    memset( &initmsg, 0, sizeof(initmsg) );
-    initmsg.sinit_num_ostreams = 5;
-    initmsg.sinit_max_instreams = 5;
-    initmsg.sinit_max_attempts = 4;
-    if(0 != setsockopt( sock_fd, IPPROTO_SCTP, SCTP_INITMSG,
-                     &initmsg, sizeof(initmsg) ))
-    {
-      std::cout << "error setsocketopt IPPROTO_SCTP: " << strerror(errno) << std::endl;
-      return;
+        printf("[Err PID = %d]: Faled setsockopt for sctp socket(fd = %d) with errno: %s ! Exit !\n", getpid(), sock_fd, strerror(errno));
+        exit(-1);
     }
-    */
 }
 
-void SctpSocket::bindAndListenTo(std::string localIp, uint32_t port)
+void SctpSocket::bind_listen_to(std::string ip, uint32_t port)
 {
     sockaddr_in servaddr;
     int addr_count = 1;
@@ -133,14 +119,15 @@ void SctpSocket::bindAndListenTo(std::string localIp, uint32_t port)
     /* Accept connections from any interface */
     bzero( (void *)&servaddr, sizeof(servaddr) );
     servaddr.sin_family = AF_INET;
-    servaddr.sin_addr.s_addr = inet_addr(localIp.c_str());
+    servaddr.sin_addr.s_addr = inet_addr(ip.c_str());
     servaddr.sin_port = htons(port);
 
     // replace bind with sctp_bindx
     if(-1 == sctp_bindx( sock_fd, (struct sockaddr *)&servaddr, addr_count,  SCTP_BINDX_ADD_ADDR))
     {
         logger->error("sctp_bindx failed with errorno: {}", strerror(errno));
-
+        printf("[Err PID = %d]: Faled setsockopt for sctp socket(fd = %d) with errno: %s ! Exit !\n", getpid(), sock_fd, strerror(errno));
+        exit(-1);
     }
     
     if (-1 == listen( sock_fd, LISTEN_QUEUE))
@@ -150,7 +137,7 @@ void SctpSocket::bindAndListenTo(std::string localIp, uint32_t port)
 }
 
 
-std::unique_ptr<SctpMessageEnvelope> SctpSocket::read()
+std::unique_ptr<SctpMessageEnvelope> SctpSocket::sctp_read()
 {
     int msg_flags;
     size_t rd_sz;
@@ -167,7 +154,7 @@ std::unique_ptr<SctpMessageEnvelope> SctpSocket::read()
     if(-1 == sctp_recvmsg(sock_fd, readBuf, MAX_BUFFER,
                          (struct sockaddr *)&cliaddr, &len, &sri, &msg_flags))
     {       
-        logger->error("[Server]: Error when sctp_recvmsg: {}", strerror(errno));
+        logger->error("Error when sctp_recvmsg: fd {}, error {}", sock_fd, strerror(errno));
         return nullptr;
     }
 
@@ -177,7 +164,7 @@ std::unique_ptr<SctpMessageEnvelope> SctpSocket::read()
     return std::move(msg);
 }
 
-void SctpSocket::write(std::vector<char> msg)
+void SctpSocket::sctp_write(std::vector<char> msg)
 {
     struct sctp_sndrcvinfo sinfo;
     

@@ -12,11 +12,14 @@ typedef std::function<void(int fd)> CallBack;
 class IoMultiplex
 {
 public:
-    IoMultiplex(std::shared_ptr<spdlog::logger> logger):logger(logger){logger->info("IoMultiplex construct");}
+    IoMultiplex(std::shared_ptr<spdlog::logger> logger):logger(logger)
+    {
+        logger->info("IoMultiplex construct");
+    }
     ~IoMultiplex(){}
     
-    void RegisterFd(int fd, CallBack cb);
-    void DeRegisterFd(int fd);
+    void register_fd(int fd, CallBack cb);
+    void deregister_fd(int fd);
     void Poll();
     
 private:

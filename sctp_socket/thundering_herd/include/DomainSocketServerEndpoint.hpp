@@ -15,7 +15,6 @@
 #include <map>
 #include "common.hpp"
 
-#define MAX_CONNECTION_NUMBER 10
 
 
 

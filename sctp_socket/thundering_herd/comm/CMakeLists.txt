@@ -8,6 +8,7 @@ set(SOURCES
 	DomainSocketClientEndpoint.cpp
 	SctpNotification.cpp 
 	SctpSocket.cpp 
-	IoMultiplex.cpp)
+	IoMultiplex.cpp
+	DomainSocket.cpp)
 
 add_library(common ${SOURCES})

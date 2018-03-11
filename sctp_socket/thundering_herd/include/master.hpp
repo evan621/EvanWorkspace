@@ -9,11 +9,11 @@
 #include <memory>
 #include "SctpServerEndpoint.hpp"
 #include "IoMultiplex.hpp"
-#include "DomainSocketClientEndpoint.hpp"
-#include "DomainSocketServerEndpoint.hpp"
 #include <iostream>
 #include "spdlog/spdlog.h"
 #include "common.hpp"
+#include "DomainSocket.hpp"
+#include "SctpSocket.hpp"
 
 
 class master
@@ -26,15 +26,17 @@ public:
 private:
     void wait_until_workers_closed();
     void prepare();
-    void send_terminate_to_client();
+    void send_terminate_to_worker();
     void master_ready_forwork();
     void indicate_test_framework();
-    void msg_handler(std::vector<char> msg);
-    
+    void msg_handler(internal_msg *msg_recv);
+    void woker_connect_handler(int conn_fd);
+    void worker_msg_handler(int fd);
 
     std::unique_ptr<SctpEndpoint> sctp_endpoint;
-    std::unique_ptr<DomainSocketClientEndpoint> test_endpoint;
-    std::unique_ptr<DomainSocketServerEndpoint> worker_endpoint;
+    std::unique_ptr<DomainSocket> test_socket_client;
+    std::unique_ptr<DomainSocket> worker_socket_listen;
+    std::map<int, std::unique_ptr<DomainSocket>> workers_socket_connect;
 
     std::vector<int> workers_pid;
     
@@ -42,6 +44,8 @@ private:
     std::shared_ptr<IoMultiplex> io_multi;
 
     bool isMasterTerminated; 
+
+    int worker_count;
 
 };
 

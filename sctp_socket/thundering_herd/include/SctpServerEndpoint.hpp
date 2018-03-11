@@ -9,6 +9,7 @@
 #include "SctpMessage.hpp"
 #include <unistd.h>
 #include "spdlog/spdlog.h"
+#include "common.hpp"
 
 
 struct AssociationInfo{
@@ -23,6 +24,7 @@ public:
     SctpServerEndpoint(std::string localIp, std::uint32_t port, std::shared_ptr<IoMultiplex> , std::shared_ptr<spdlog::logger> logger);
     ~SctpServerEndpoint();
     void SendMsg(std::vector<char> msg);
+    void register_newconn_handler(newconn_handler_callbk cb);
 
 private:
     int onSctpNotification(std::unique_ptr<SctpMessageEnvelope> msg);
@@ -42,4 +44,6 @@ private:
     SctpNotification notification;
     
     std::shared_ptr<spdlog::logger> logger;
+    newconn_handler_callbk new_conn_handler;
+    
 };

@@ -1,5 +1,8 @@
 #include "tester.hpp"
 
+#define MAX_NUM_CONNECTION 1
+
+
 tester::tester(): continue_poll(true), is_sut_ready(false)
 {
     unlink("./log/test.txt");
@@ -8,16 +11,40 @@ tester::tester(): continue_poll(true), is_sut_ready(false)
     logger->set_pattern("[%n][%P][%t][%l] %v");
 
     io_multi = std::make_shared<IoMultiplex>(logger);
-    test_endpoint = std::make_unique<DomainSocketServerEndpoint>(TEST_MASTER_SOCKET_NAME, io_multi, logger);
-    test_endpoint->register_handler([this](std::vector<char> msg) 
-                        { test_msg_handler(msg); });
+    test_socket_server_listen = std::make_unique<DomainSocket>(TEST_MASTER_SOCKET_NAME, SERVER_DOMAIN_SOCKET, logger);
 
-    io_multi->RegisterFd(STDIN, [this](int fd) 
+    io_multi->register_fd(test_socket_server_listen->socket_fd(), [this](int sock_fd){
+                            sut_connect_handler();
+                        });
+ 
+    io_multi->register_fd(STDIN, [this](int fd) 
                         {  ReadUserCmd(fd); } );
 }
 
 tester::~tester()
 {}
+
+void tester::sut_connect_handler()
+{
+    int conn_socket_fd = test_socket_server_listen->domain_accept();
+    test_socket_server_connect = std::make_unique<DomainSocket>(conn_socket_fd, logger);
+
+    io_multi->register_fd(test_socket_server_connect->socket_fd(), [this](int sock_fd){
+        
+                printf("new sut message received request %d\n", sock_fd);
+                int fd;
+                auto msg = test_socket_server_connect->domain_recv_msg(fd);
+
+                if(msg == NULL)
+                {
+                    printf("[Info PID = %d]: Connection to SUT lost, deregister fd(%d)\n", getpid(), sock_fd);
+
+                    io_multi->deregister_fd(sock_fd);
+                    return;
+                }
+                test_msg_handler(msg->deserialized_data());
+            });
+}
 
 void tester::ReadUserCmd(int fd)
 {
@@ -64,7 +91,6 @@ void tester::run()
     terminate();
 }
 
-
 void tester::terminate()
 {
     printf("[TEST]: Indicate sut to quit...!\n");
@@ -79,20 +105,28 @@ void tester::terminate()
     }
 }
 
-
 void tester::test_case()
 {
-    auto sctp_endpoint = std::make_unique<SctpClientEndpoint>("127.0.0.1", MY_PORT_NUM, io_multi, logger);
+    for (int i = 0; i < MAX_NUM_CONNECTION; i++)
+    {
+        printf("start endpoint: %x\n", i);
+        auto endpoint = std::make_shared<SctpClientEndpoint>("127.0.0.1", MY_PORT_NUM, io_multi, logger);
 
-    std::string hello = "helloworld!";
-    std::vector<char> msg(hello.begin(), hello.end());
-    
-    sctp_endpoint->SendMsg(msg);
+        sctp_endpoints.push_back(endpoint);
+        
+    }
 
-    /*
-    sleep(2);
-    
-    sctp_endpoint->SendMsg(msg);*/
+    for (int msg_cnt = 0; msg_cnt < 1; msg_cnt++)
+    {
+        std::string hello = "helloworld: !" + std::to_string(msg_cnt);
+
+        std::vector<char> msg(hello.begin(), hello.end());
+        for (int i = 0; i < MAX_NUM_CONNECTION; i++)
+        {
+            printf("send message to: %x\n",  i);
+            sctp_endpoints.at(i)->SendMsg(msg);
+        }
+    }
 }
 
 void tester::indicate_sut_to_quit()
@@ -100,26 +134,20 @@ void tester::indicate_sut_to_quit()
     internal_msg msg;
     msg.header.msg_id = MASTER_TERMINATE_MSG_ID;
 
-    std::vector<char> serial_msg; 
-
-    serial_msg.resize(sizeof(msg));
-    std::memcpy(serial_msg.data(), &msg, sizeof(msg));
-
     printf("[TEST] Indicate sut to quit\n");
-    test_endpoint->publish_msg(serial_msg);
+    auto serial_msg = std::make_unique<SerializedMsg<internal_msg>>(msg);
+    test_socket_server_connect->domain_write(std::move(serial_msg));
 }
 
-void tester::test_msg_handler(std::vector<char> msg)
+void tester::test_msg_handler(internal_msg* msg_recv)
 {
-    internal_msg msg_recv;
-
-    std::memcpy(&msg_recv, msg.data(), msg.size());
-
-    switch(msg_recv.header.msg_id)
+    switch(msg_recv->header.msg_id)
     {
         case(MASTER_READY_MSG_ID):
             printf("SUT is ready!\n");
             is_sut_ready = true;
+            printf("Start test...\n");
+            test_case();      
             print_instruct();
             break;
         default:

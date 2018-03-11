@@ -19,10 +19,13 @@ class SctpClientEndpoint: public SctpEndpoint
 {
 public:
     SctpClientEndpoint(std::string targetIp, std::uint32_t port, std::shared_ptr<IoMultiplex> multiRecv, std::shared_ptr<spdlog::logger> logger);
+    SctpClientEndpoint(std::shared_ptr<IoMultiplex> multiRecv, std::shared_ptr<spdlog::logger> logger, int fd);
+
     ~SctpClientEndpoint();
 
     void SendMsg(std::vector<char> msg);
     
+    void register_newconn_handler(newconn_handler_callbk cb){}
 private:
     int onSctpNotification(std::unique_ptr<SctpMessageEnvelope> msg);
     int onSctpMessages(std::unique_ptr<SctpMessageEnvelope> msg);

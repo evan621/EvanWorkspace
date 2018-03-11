@@ -4,26 +4,40 @@
 #include <errno.h>
 #include <string.h>
 #include <stdio.h>
+#include <cstddef>
 
 
 SctpServerEndpoint::SctpServerEndpoint(std::string localIp, std::uint32_t port, std::shared_ptr<IoMultiplex> multiRecv, std::shared_ptr<spdlog::logger> logger): 
-  assoInfo(nullptr), io_multi(multiRecv), logger(logger)
+  assoInfo(nullptr), io_multi(multiRecv), logger(logger), sctp_socket_conn(nullptr)
 {
     sctp_socket_listen = std::make_unique<SctpSocket>(localIp, port, SERVER_SCTP_SOCKET, logger);
       
-    io_multi->RegisterFd(sctp_socket_listen->socket_fd(), [this](int sock_fd) 
+    io_multi->register_fd(sctp_socket_listen->socket_fd(), [this](int sock_fd) 
                 {   
                     SctpMsgHandler(sock_fd);
                 } );  
 
-    //socket_tab.insert(std::pair<int, std::unique_ptr<SctpSocket>>(sctp_socket->socket_fd(), std::move(sctp_socket)))
-    logger->info("Server Start and bind to addr({}:{})", localIp.c_str(), port);
+    logger->info("SCTP Server socket create and bind to addr({}:{}), with fd {}", 
+                    localIp.c_str(), port, sctp_socket_listen->socket_fd());
 }
 
 
 SctpServerEndpoint::~SctpServerEndpoint()
 { 
+    io_multi->deregister_fd(sctp_socket_listen->socket_fd());
+
+    if(sctp_socket_conn != nullptr)
+    {
+        io_multi->deregister_fd(sctp_socket_conn->socket_fd());
+        sctp_socket_conn = nullptr;
+    }
+
     logger->info("SctpServerEndpoint destructor called!");
+}
+
+void SctpServerEndpoint::register_newconn_handler(newconn_handler_callbk cb)
+{
+    new_conn_handler = cb;
 }
 
 int SctpServerEndpoint::SctpMsgHandler(int sock_fd)
@@ -34,18 +48,30 @@ int SctpServerEndpoint::SctpMsgHandler(int sock_fd)
         //return;
         int conn_sock_fd = sctp_socket_listen->sctp_accept();
 
-        logger->info("New SCTP client connected with fd {}!", conn_sock_fd);
+        logger->info("SCTP client conn req received on listener {} with newfd {}!", sock_fd, conn_sock_fd);
 
+        new_conn_handler(conn_sock_fd);
+        
+        /*
+
+        if(sctp_socket_conn != nullptr)
+        {
+            io_multi->deregister_fd(sctp_socket_conn->socket_fd());
+            sctp_socket_conn = nullptr;
+        }
+
+        
         sctp_socket_conn = std::make_unique<SctpSocket>(conn_sock_fd, logger);
 
-        io_multi->RegisterFd(sctp_socket_conn->socket_fd(), [this](int sock_fd) 
+        io_multi->register_fd(sctp_socket_conn->socket_fd(), [this](int sock_fd) 
                     {   
                         SctpMsgHandler(sock_fd);
                     } );  
+                    */
     }
     else if (sock_fd == sctp_socket_conn->socket_fd())
     {
-        std::unique_ptr<SctpMessageEnvelope> msg = sctp_socket_conn->read();
+        std::unique_ptr<SctpMessageEnvelope> msg = sctp_socket_conn->sctp_read();
 
         if(nullptr == msg)
         {
@@ -96,7 +122,7 @@ int SctpServerEndpoint::onSctpNotification(std::unique_ptr<SctpMessageEnvelope> 
         break;
       case SCTP_SHUTDOWN_COMP:
         // deregister from the poll
-        io_multi->DeRegisterFd(sctp_socket_conn->socket_fd());
+        io_multi->deregister_fd(sctp_socket_conn->socket_fd());
         logger->info("Assoc change(ID=0x{}), SHUTDOWN COMPLETE\n", sctpAssociationChange->sac_assoc_id);
         break;
       case SCTP_CANT_STR_ASSOC:
@@ -134,33 +160,6 @@ int SctpServerEndpoint::onSctpMessages(std::unique_ptr<SctpMessageEnvelope> msg)
 
 void SctpServerEndpoint::SendMsg(std::vector<char> msg)
 {
-    sctp_socket_conn->write(std::move(msg));
+    sctp_socket_conn->sctp_write(std::move(msg));
 }
-
-/*
-void SctpServerEndpoint::SendMsg()
-{
-  if(nullptr == assoInfo)
-  {
-    std::cout << "[Server]: No client connected now!" << std::endl;
-    return;
-  }
-  
-  sockaddr_in clientAddr;
-  clientAddr.sin_family = AF_INET;
-  clientAddr.sin_port = htons(assoInfo->port);
-  clientAddr.sin_addr.s_addr = inet_addr(assoInfo->ip->c_str());
-  
-  std::string message;
-  unsigned int rd_sz = 20;
-  
-  std::cout << "[Server]: Input the message echo to client: " << std::endl;
-  std::cin >> message;
-  
-  sctp_sendmsg(sctp_socket->socket_fd(), message.c_str(), rd_sz, 
-        (sockaddr *) &clientAddr, sizeof(sockaddr_in), 
-        0, 0, assoInfo->stream,    //SCTP_EOF
-        0, 0);  
-}
-*/
 

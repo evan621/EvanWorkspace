@@ -8,7 +8,7 @@ DomainSocketServerEndpoint::DomainSocketServerEndpoint(const char *servername, s
 
     domain_listen(servername);
     
-    io_multi->RegisterFd(listen_fd, [this](int sock_fd) 
+    io_multi->register_fd(listen_fd, [this](int sock_fd) 
                         {   
                             if(sock_fd != listen_fd)
                             {
@@ -28,7 +28,7 @@ int DomainSocketServerEndpoint::domain_listen(const char *servername)
 { 
     struct sockaddr_un un; 
 
-    if ((listen_fd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0)
+    if ((listen_fd = socket(AF_LOCAL, SOCK_STREAM, 0)) < 0)
     {
         return(-1); 
     }
@@ -38,7 +38,7 @@ int DomainSocketServerEndpoint::domain_listen(const char *servername)
     memset(&un, 0, sizeof(un)); 
     
     // Init of sockaddr_un
-    un.sun_family = AF_UNIX; 
+    un.sun_family = AF_LOCAL; 
     strcpy(un.sun_path, servername); 
     len = offsetof(struct sockaddr_un, sun_path) + strlen(servername); 
     
@@ -92,7 +92,7 @@ int DomainSocketServerEndpoint::domain_accept()
 
     logger->info("un.sun_path after accept, {}, {}, {}!\n", un.sun_path, len, statbuf.st_uid);
 
-    io_multi->RegisterFd(conn_fd, [this](int sock_fd) 
+    io_multi->register_fd(conn_fd, [this](int sock_fd) 
                         {   
                             domain_receive(sock_fd);
                         } );  
@@ -138,7 +138,7 @@ void DomainSocketServerEndpoint::domain_receive(int sock_fd)
     else
     {
         logger->error("message size is 0, the connection to fd({}) lost", sock_fd);
-        io_multi->DeRegisterFd(sock_fd);
+        io_multi->deregister_fd(sock_fd);
         return;
     }
 
@@ -163,5 +163,4 @@ void DomainSocketServerEndpoint::publish_msg(std::vector<char> msg)
         }
     }    
 }
-
 

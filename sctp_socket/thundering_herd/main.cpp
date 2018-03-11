@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#define PROCESS_NUM 0
+#define WORKER_NUM 1
 
 int spawn_worker_process()
 {
@@ -16,10 +16,9 @@ int spawn_worker_process()
     {
         case 0:
         {
-            printf("New worker(%d) created by Parent (%d). \n", getpid(), getppid());
+            printf("Start worker(pid:%d), created by Parent(pid:%d)\n", getpid(), getppid());
             auto newWorker = std::make_unique<worker>();
             newWorker->process();
-            sleep(2);
             printf("[Worker/PID: %d]: Exit! \n", getpid());
             exit(0);
         }
@@ -37,7 +36,7 @@ int main()
 {  
     std::vector<int> workers_pid;
     
-    for (int i = 0; i < PROCESS_NUM; i++)
+    for (int i = 0; i < WORKER_NUM; i++)
     {
         int worker_pid = spawn_worker_process();
         workers_pid.push_back(worker_pid);
