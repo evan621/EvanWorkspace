@@ -6,7 +6,7 @@
 
 #define MAX_BUFFER	256
 
-#define MY_PORT_NUM	18002
+#define MY_PORT_NUM	18005
 
 #define LOCALTIME_STREAM	0
 #define GMT_STREAM		1

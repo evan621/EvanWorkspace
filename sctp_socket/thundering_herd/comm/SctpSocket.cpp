@@ -71,14 +71,14 @@ void SctpSocket::sctp_connect(std::string ip, uint32_t port)
     servaddr.sin_port = htons(port);
     servaddr.sin_addr.s_addr = inet_addr( ip.c_str() );
 
-    if(-1 != sctp_connectx(sock_fd, (struct sockaddr *)&servaddr, 1, &assoc_id))
+    if(-1 == sctp_connectx(sock_fd, (struct sockaddr *)&servaddr, 1, &assoc_id))
     {
-        logger->info("STCP Connection established, assoc id = {}", assoc_id);
-        
-        printf("[Err PID = %d]: Faled sctp_connectx sctp socket(fd = %d) to  with errno: %s ! Exit !\n", getpid(), ip.c_str(), strerror(errno));
+        printf("[Err PID = %d]: Faled sctp_connectx sctp socket(fd = %d) to  with errno: %s ! Exit !\n", getpid(), sock_fd, strerror(errno));
         exit(-1);
-        return;
     }
+    
+    logger->info("STCP Connection established, assoc id = {}", assoc_id);        
+    return;
 }
 
 
