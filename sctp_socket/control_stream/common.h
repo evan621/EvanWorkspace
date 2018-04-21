@@ -1,0 +1,17 @@
+
+#define MAX_BUFFER	512
+
+#define MY_PORT_NUM	18002
+
+#define LOCALTIME_STREAM	0
+#define GMT_STREAM		1
+
+#define LISTEN_QUEUE 5
+
+#define TIME_OUT 10000
+
+#define STDIN 0
+
+//#define ENABLE_ALL_NOTIFICATION
+
+
