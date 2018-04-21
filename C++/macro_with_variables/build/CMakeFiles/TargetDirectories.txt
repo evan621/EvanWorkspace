@@ -1,3 +1,0 @@
-/home/evan/Desktop/EvanWorkspace/C++/macro_with_variables/build/CMakeFiles/edit_cache.dir
-/home/evan/Desktop/EvanWorkspace/C++/macro_with_variables/build/CMakeFiles/rebuild_cache.dir
-/home/evan/Desktop/EvanWorkspace/C++/macro_with_variables/build/CMakeFiles/test.dir
