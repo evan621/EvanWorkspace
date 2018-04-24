@@ -8,7 +8,8 @@
 		loggerInstance.operate(__VA_ARGS__)
 
 #define LOG_INFO_MSG(...) LOG_MSG_IMPL(logger::wrapper::Instance(), info, __VA_ARGS__)
-#define LOG_INFO_DBG(...) LOG_MSG_IMPL(logger::wrapper::Instance(), debug, __VA_ARGS__)
+#define LOG_DEBUG_MSG(...) LOG_MSG_IMPL(logger::wrapper::Instance(), debug, __VA_ARGS__)
+#define LOG_ERROR_MSG(...) LOG_MSG_IMPL(logger::wrapper::Instance(), error, __VA_ARGS__)
 
 
 #define LOG_ENABLE_DBG() LOG_MSG_IMPL(logger::wrapper::Instance(), set_level, spdlog::level::debug)
