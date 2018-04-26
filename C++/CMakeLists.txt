@@ -1,0 +1,105 @@
+cmake_minimum_required(VERSION 3.10)
+project(C__)
+
+set(CMAKE_CXX_STANDARD 11)
+
+include_directories(Tips/extern_c)
+include_directories(Tips/logging_with_spdlog/logger)
+include_directories(Tips/logging_with_spdlog/spdlog/bench)
+include_directories(Tips/logging_with_spdlog/spdlog/bench/latency)
+include_directories(Tips/logging_with_spdlog/spdlog/example)
+include_directories(Tips/logging_with_spdlog/spdlog/include)
+include_directories(Tips/logging_with_spdlog/spdlog/include/spdlog)
+include_directories(Tips/logging_with_spdlog/spdlog/include/spdlog/details)
+include_directories(Tips/logging_with_spdlog/spdlog/include/spdlog/fmt)
+include_directories(Tips/logging_with_spdlog/spdlog/include/spdlog/fmt/bundled)
+include_directories(Tips/logging_with_spdlog/spdlog/include/spdlog/sinks)
+include_directories(Tips/logging_with_spdlog/spdlog/tests)
+
+add_executable(C__
+        boost/program_options/po.cpp
+        boost/tutorial-0-head-less-lib/foo.cpp
+        boost/tutorial-1-link-to-boost-lib/foo.cpp
+        "Essential C++/GenericProgramming/main.cpp"
+        Tips/class_mem_func_as_callback/foo.cpp
+        Tips/extern_c/cExample.c
+        Tips/extern_c/cExample.h
+        Tips/extern_c/cppExample.cpp
+        Tips/extern_c/cppExample.hpp
+        Tips/extern_c/main.c
+        Tips/extern_c/main.cpp
+        Tips/logging_with_spdlog/logger/Logger.cpp
+        Tips/logging_with_spdlog/logger/Logger.hpp
+        Tips/logging_with_spdlog/logger/LoggerAgent.cpp
+        Tips/logging_with_spdlog/logger/Main.cpp
+        Tips/logging_with_spdlog/spdlog/bench/latency/g3log-crush.cpp
+        Tips/logging_with_spdlog/spdlog/bench/latency/g3log-latency.cpp
+        Tips/logging_with_spdlog/spdlog/bench/latency/spdlog-latency.cpp
+        Tips/logging_with_spdlog/spdlog/bench/latency/utils.h
+        Tips/logging_with_spdlog/spdlog/bench/boost-bench-mt.cpp
+        Tips/logging_with_spdlog/spdlog/bench/boost-bench.cpp
+        Tips/logging_with_spdlog/spdlog/bench/easylogging-bench-mt.cpp
+        Tips/logging_with_spdlog/spdlog/bench/easylogging-bench.cpp
+        Tips/logging_with_spdlog/spdlog/bench/g2log-async.cpp
+        Tips/logging_with_spdlog/spdlog/bench/glog-bench-mt.cpp
+        Tips/logging_with_spdlog/spdlog/bench/glog-bench.cpp
+        Tips/logging_with_spdlog/spdlog/bench/spdlog-async.cpp
+        Tips/logging_with_spdlog/spdlog/bench/spdlog-bench-mt.cpp
+        Tips/logging_with_spdlog/spdlog/bench/spdlog-bench.cpp
+        Tips/logging_with_spdlog/spdlog/bench/spdlog-null-async.cpp
+        Tips/logging_with_spdlog/spdlog/bench/utils.h
+        Tips/logging_with_spdlog/spdlog/example/jni/example.cpp
+        Tips/logging_with_spdlog/spdlog/example/bench.cpp
+        Tips/logging_with_spdlog/spdlog/example/example.cpp
+        Tips/logging_with_spdlog/spdlog/example/multisink.cpp
+        Tips/logging_with_spdlog/spdlog/example/utils.h
+        Tips/logging_with_spdlog/spdlog/include/spdlog/details/async_log_helper.h
+        Tips/logging_with_spdlog/spdlog/include/spdlog/details/async_logger_impl.h
+        Tips/logging_with_spdlog/spdlog/include/spdlog/details/file_helper.h
+        Tips/logging_with_spdlog/spdlog/include/spdlog/details/log_msg.h
+        Tips/logging_with_spdlog/spdlog/include/spdlog/details/logger_impl.h
+        Tips/logging_with_spdlog/spdlog/include/spdlog/details/mpmc_bounded_q.h
+        Tips/logging_with_spdlog/spdlog/include/spdlog/details/null_mutex.h
+        Tips/logging_with_spdlog/spdlog/include/spdlog/details/os.h
+        Tips/logging_with_spdlog/spdlog/include/spdlog/details/pattern_formatter_impl.h
+        Tips/logging_with_spdlog/spdlog/include/spdlog/details/registry.h
+        Tips/logging_with_spdlog/spdlog/include/spdlog/details/spdlog_impl.h
+        Tips/logging_with_spdlog/spdlog/include/spdlog/fmt/bundled/format.cc
+        Tips/logging_with_spdlog/spdlog/include/spdlog/fmt/bundled/format.h
+        Tips/logging_with_spdlog/spdlog/include/spdlog/fmt/bundled/ostream.cc
+        Tips/logging_with_spdlog/spdlog/include/spdlog/fmt/bundled/ostream.h
+        Tips/logging_with_spdlog/spdlog/include/spdlog/fmt/bundled/posix.cc
+        Tips/logging_with_spdlog/spdlog/include/spdlog/fmt/bundled/posix.h
+        Tips/logging_with_spdlog/spdlog/include/spdlog/fmt/bundled/time.h
+        Tips/logging_with_spdlog/spdlog/include/spdlog/fmt/fmt.h
+        Tips/logging_with_spdlog/spdlog/include/spdlog/fmt/ostr.h
+        Tips/logging_with_spdlog/spdlog/include/spdlog/sinks/android_sink.h
+        Tips/logging_with_spdlog/spdlog/include/spdlog/sinks/ansicolor_sink.h
+        Tips/logging_with_spdlog/spdlog/include/spdlog/sinks/base_sink.h
+        Tips/logging_with_spdlog/spdlog/include/spdlog/sinks/dist_sink.h
+        Tips/logging_with_spdlog/spdlog/include/spdlog/sinks/file_sinks.h
+        Tips/logging_with_spdlog/spdlog/include/spdlog/sinks/msvc_sink.h
+        Tips/logging_with_spdlog/spdlog/include/spdlog/sinks/null_sink.h
+        Tips/logging_with_spdlog/spdlog/include/spdlog/sinks/ostream_sink.h
+        Tips/logging_with_spdlog/spdlog/include/spdlog/sinks/sink.h
+        Tips/logging_with_spdlog/spdlog/include/spdlog/sinks/stdout_sinks.h
+        Tips/logging_with_spdlog/spdlog/include/spdlog/sinks/syslog_sink.h
+        Tips/logging_with_spdlog/spdlog/include/spdlog/sinks/wincolor_sink.h
+        Tips/logging_with_spdlog/spdlog/include/spdlog/async_logger.h
+        Tips/logging_with_spdlog/spdlog/include/spdlog/common.h
+        Tips/logging_with_spdlog/spdlog/include/spdlog/formatter.h
+        Tips/logging_with_spdlog/spdlog/include/spdlog/logger.h
+        Tips/logging_with_spdlog/spdlog/include/spdlog/spdlog.h
+        Tips/logging_with_spdlog/spdlog/include/spdlog/tweakme.h
+        Tips/logging_with_spdlog/spdlog/tests/catch.hpp
+        Tips/logging_with_spdlog/spdlog/tests/cond_logging.cpp
+        Tips/logging_with_spdlog/spdlog/tests/errors.cpp
+        Tips/logging_with_spdlog/spdlog/tests/file_helper.cpp
+        Tips/logging_with_spdlog/spdlog/tests/file_log.cpp
+        Tips/logging_with_spdlog/spdlog/tests/format.cpp
+        Tips/logging_with_spdlog/spdlog/tests/includes.h
+        Tips/logging_with_spdlog/spdlog/tests/main.cpp
+        Tips/logging_with_spdlog/spdlog/tests/registry.cpp
+        Tips/logging_with_spdlog/spdlog/tests/utils.cpp
+        Tips/logging_with_spdlog/spdlog/tests/utils.h
+        Tips/macro_with_variables/test.cpp)

@@ -1,0 +1,4 @@
+/home/evan/Desktop/EvanWorkspace/C++/Tips/logging_with_spdlog/logger/build/CMakeFiles/edit_cache.dir
+/home/evan/Desktop/EvanWorkspace/C++/Tips/logging_with_spdlog/logger/build/CMakeFiles/spdexam.dir
+/home/evan/Desktop/EvanWorkspace/C++/Tips/logging_with_spdlog/logger/build/CMakeFiles/loggeragent.dir
+/home/evan/Desktop/EvanWorkspace/C++/Tips/logging_with_spdlog/logger/build/CMakeFiles/rebuild_cache.dir

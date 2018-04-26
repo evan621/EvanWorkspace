@@ -1,0 +1,1 @@
+/usr/bin/c++      CMakeFiles/loggeragent.dir/LoggerAgent.cpp.o  -o loggeragent 
