@@ -474,19 +474,21 @@ spdlog/details/spdlog_impl.h
 
 ../../spdlog/include/spdlog/tweakme.h
 
-/home/evan/Desktop/EvanWorkspace/C++/logging_with_spdlog/logger/Logger.cpp
+/home/evan/Desktop/EvanWorkspace/C++/Tips/logging_with_spdlog/logger/Logger.cpp
 Logger.hpp
-/home/evan/Desktop/EvanWorkspace/C++/logging_with_spdlog/logger/Logger.hpp
+/home/evan/Desktop/EvanWorkspace/C++/Tips/logging_with_spdlog/logger/Logger.hpp
 stdio.h
 -
 
-/home/evan/Desktop/EvanWorkspace/C++/logging_with_spdlog/logger/Logger.hpp
+/home/evan/Desktop/EvanWorkspace/C++/Tips/logging_with_spdlog/logger/Logger.hpp
 spdlog/spdlog.h
 -
 memory
 -
 
-/home/evan/Desktop/EvanWorkspace/C++/logging_with_spdlog/logger/Main.cpp
+/home/evan/Desktop/EvanWorkspace/C++/Tips/logging_with_spdlog/logger/Main.cpp
 Logger.hpp
-/home/evan/Desktop/EvanWorkspace/C++/logging_with_spdlog/logger/Logger.hpp
+/home/evan/Desktop/EvanWorkspace/C++/Tips/logging_with_spdlog/logger/Logger.hpp
+unistd.h
+-
 

@@ -6,5 +6,5 @@ CXX_FLAGS =   -std=gnu++14
 
 CXX_DEFINES = 
 
-CXX_INCLUDES = -I/home/evan/Desktop/EvanWorkspace/C++/logging_with_spdlog/logger/../spdlog/include 
+CXX_INCLUDES = -I/home/evan/Desktop/EvanWorkspace/C++/Tips/logging_with_spdlog/logger/../spdlog/include 
 

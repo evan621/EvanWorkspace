@@ -1,19 +1,19 @@
 #include "Logger.hpp"
+#include <unistd.h>
 
 
 int main()
 {
-
-	LOG_ENABLE_DBG();
-
-	LOG_INFO_MSG("Hello world 1\n");
-
+	auto count = 100;
 	
-	LOG_ERROR_MSG("hello error \n");
+	while(count--)
+	{
+		LOG_INFO_MSG("Info loggs 1, %d\n", count);
 
-	
-	LOG_DEBUG_MSG("Hello debug 5\n");
+		LOG_ERROR_MSG("Error loggs, %d\n", count);
+
+		usleep(100000);
+	}
+
 }
-
-
 

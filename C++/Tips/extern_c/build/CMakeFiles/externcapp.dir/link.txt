@@ -1,0 +1,1 @@
+/usr/bin/c++      CMakeFiles/externcapp.dir/main.c.o CMakeFiles/externcapp.dir/cExample.c.o CMakeFiles/externcapp.dir/cppExample.cpp.o  -o externcapp -rdynamic 

@@ -1,0 +1,20 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/evan/Desktop/EvanWorkspace/C++/Tips/extern_c/cExample.c
+cExample.h
+/home/evan/Desktop/EvanWorkspace/C++/Tips/extern_c/cExample.h
+cppExample.hpp
+/home/evan/Desktop/EvanWorkspace/C++/Tips/extern_c/cppExample.hpp
+
+/home/evan/Desktop/EvanWorkspace/C++/Tips/extern_c/cExample.h
+
+/home/evan/Desktop/EvanWorkspace/C++/Tips/extern_c/cppExample.hpp
+
+/home/evan/Desktop/EvanWorkspace/C++/Tips/extern_c/main.c
+

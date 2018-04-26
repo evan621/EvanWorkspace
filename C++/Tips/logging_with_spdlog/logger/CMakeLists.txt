@@ -16,3 +16,6 @@ find_package(Threads)
 
 add_executable(spdexam Logger.cpp Main.cpp)
 target_link_libraries(spdexam spdlog ${CMAKE_THREAD_LIBS_INIT})
+
+
+add_executable(loggeragent LoggerAgent.cpp)

@@ -54,10 +54,10 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/evan/Desktop/EvanWorkspace/C++/logging_with_spdlog/logger
+CMAKE_SOURCE_DIR = /home/evan/Desktop/EvanWorkspace/C++/Tips/logging_with_spdlog/logger
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/evan/Desktop/EvanWorkspace/C++/logging_with_spdlog/logger/build
+CMAKE_BINARY_DIR = /home/evan/Desktop/EvanWorkspace/C++/Tips/logging_with_spdlog/logger/build
 
 #=============================================================================
 # Target rules for target CMakeFiles/spdexam.dir
@@ -66,7 +66,7 @@ CMAKE_BINARY_DIR = /home/evan/Desktop/EvanWorkspace/C++/logging_with_spdlog/logg
 CMakeFiles/spdexam.dir/all:
 	$(MAKE) -f CMakeFiles/spdexam.dir/build.make CMakeFiles/spdexam.dir/depend
 	$(MAKE) -f CMakeFiles/spdexam.dir/build.make CMakeFiles/spdexam.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/evan/Desktop/EvanWorkspace/C++/logging_with_spdlog/logger/build/CMakeFiles --progress-num=1,2,3 "Built target spdexam"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/evan/Desktop/EvanWorkspace/C++/Tips/logging_with_spdlog/logger/build/CMakeFiles --progress-num=3,4,5 "Built target spdexam"
 .PHONY : CMakeFiles/spdexam.dir/all
 
 # Include target in all.
@@ -76,9 +76,9 @@ all: CMakeFiles/spdexam.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/spdexam.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/evan/Desktop/EvanWorkspace/C++/logging_with_spdlog/logger/build/CMakeFiles 3
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/evan/Desktop/EvanWorkspace/C++/Tips/logging_with_spdlog/logger/build/CMakeFiles 3
 	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/spdexam.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/evan/Desktop/EvanWorkspace/C++/logging_with_spdlog/logger/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/evan/Desktop/EvanWorkspace/C++/Tips/logging_with_spdlog/logger/build/CMakeFiles 0
 .PHONY : CMakeFiles/spdexam.dir/rule
 
 # Convenience name for target.
@@ -93,6 +93,43 @@ CMakeFiles/spdexam.dir/clean:
 
 # clean rule for target.
 clean: CMakeFiles/spdexam.dir/clean
+
+.PHONY : clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/loggeragent.dir
+
+# All Build rule for target.
+CMakeFiles/loggeragent.dir/all:
+	$(MAKE) -f CMakeFiles/loggeragent.dir/build.make CMakeFiles/loggeragent.dir/depend
+	$(MAKE) -f CMakeFiles/loggeragent.dir/build.make CMakeFiles/loggeragent.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/evan/Desktop/EvanWorkspace/C++/Tips/logging_with_spdlog/logger/build/CMakeFiles --progress-num=1,2 "Built target loggeragent"
+.PHONY : CMakeFiles/loggeragent.dir/all
+
+# Include target in all.
+all: CMakeFiles/loggeragent.dir/all
+
+.PHONY : all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/loggeragent.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/evan/Desktop/EvanWorkspace/C++/Tips/logging_with_spdlog/logger/build/CMakeFiles 2
+	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/loggeragent.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/evan/Desktop/EvanWorkspace/C++/Tips/logging_with_spdlog/logger/build/CMakeFiles 0
+.PHONY : CMakeFiles/loggeragent.dir/rule
+
+# Convenience name for target.
+loggeragent: CMakeFiles/loggeragent.dir/rule
+
+.PHONY : loggeragent
+
+# clean rule for target.
+CMakeFiles/loggeragent.dir/clean:
+	$(MAKE) -f CMakeFiles/loggeragent.dir/build.make CMakeFiles/loggeragent.dir/clean
+.PHONY : CMakeFiles/loggeragent.dir/clean
+
+# clean rule for target.
+clean: CMakeFiles/loggeragent.dir/clean
 
 .PHONY : clean
 

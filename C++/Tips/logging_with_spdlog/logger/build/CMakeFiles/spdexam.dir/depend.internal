@@ -30,8 +30,8 @@ CMakeFiles/spdexam.dir/Logger.cpp.o
  ../../spdlog/include/spdlog/sinks/wincolor_sink.h
  ../../spdlog/include/spdlog/spdlog.h
  ../../spdlog/include/spdlog/tweakme.h
- /home/evan/Desktop/EvanWorkspace/C++/logging_with_spdlog/logger/Logger.cpp
- /home/evan/Desktop/EvanWorkspace/C++/logging_with_spdlog/logger/Logger.hpp
+ /home/evan/Desktop/EvanWorkspace/C++/Tips/logging_with_spdlog/logger/Logger.cpp
+ /home/evan/Desktop/EvanWorkspace/C++/Tips/logging_with_spdlog/logger/Logger.hpp
 CMakeFiles/spdexam.dir/Main.cpp.o
  ../../spdlog/include/spdlog/async_logger.h
  ../../spdlog/include/spdlog/common.h
@@ -61,5 +61,5 @@ CMakeFiles/spdexam.dir/Main.cpp.o
  ../../spdlog/include/spdlog/sinks/wincolor_sink.h
  ../../spdlog/include/spdlog/spdlog.h
  ../../spdlog/include/spdlog/tweakme.h
- /home/evan/Desktop/EvanWorkspace/C++/logging_with_spdlog/logger/Logger.hpp
- /home/evan/Desktop/EvanWorkspace/C++/logging_with_spdlog/logger/Main.cpp
+ /home/evan/Desktop/EvanWorkspace/C++/Tips/logging_with_spdlog/logger/Logger.hpp
+ /home/evan/Desktop/EvanWorkspace/C++/Tips/logging_with_spdlog/logger/Main.cpp

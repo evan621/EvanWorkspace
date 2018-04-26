@@ -1,0 +1,16 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/evan/Desktop/EvanWorkspace/C++/Tips/extern_c/cppExample.cpp
+cppExample.hpp
+/home/evan/Desktop/EvanWorkspace/C++/Tips/extern_c/cppExample.hpp
+iostream
+-
+
+/home/evan/Desktop/EvanWorkspace/C++/Tips/extern_c/cppExample.hpp
+

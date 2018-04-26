@@ -1,4 +1,4 @@
-# Install script for directory: /home/evan/Desktop/EvanWorkspace/C++/logging_with_spdlog/logger
+# Install script for directory: /home/evan/Desktop/EvanWorkspace/C++/Tips/logging_with_spdlog/logger
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -40,5 +40,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/evan/Desktop/EvanWorkspace/C++/logging_with_spdlog/logger/build/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/evan/Desktop/EvanWorkspace/C++/Tips/logging_with_spdlog/logger/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

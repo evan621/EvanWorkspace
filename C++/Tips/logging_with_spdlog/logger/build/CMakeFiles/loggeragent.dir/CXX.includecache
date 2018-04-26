@@ -1,0 +1,14 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/evan/Desktop/EvanWorkspace/C++/Tips/logging_with_spdlog/logger/LoggerAgent.cpp
+iostream
+-
+string
+-
+

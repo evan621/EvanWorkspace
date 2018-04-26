@@ -48,10 +48,10 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/evan/Desktop/EvanWorkspace/C++/logging_with_spdlog/logger
+CMAKE_SOURCE_DIR = /home/evan/Desktop/EvanWorkspace/C++/Tips/logging_with_spdlog/logger
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/evan/Desktop/EvanWorkspace/C++/logging_with_spdlog/logger/build
+CMAKE_BINARY_DIR = /home/evan/Desktop/EvanWorkspace/C++/Tips/logging_with_spdlog/logger/build
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -80,9 +80,9 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/evan/Desktop/EvanWorkspace/C++/logging_with_spdlog/logger/build/CMakeFiles /home/evan/Desktop/EvanWorkspace/C++/logging_with_spdlog/logger/build/CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/evan/Desktop/EvanWorkspace/C++/Tips/logging_with_spdlog/logger/build/CMakeFiles /home/evan/Desktop/EvanWorkspace/C++/Tips/logging_with_spdlog/logger/build/CMakeFiles/progress.marks
 	$(MAKE) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/evan/Desktop/EvanWorkspace/C++/logging_with_spdlog/logger/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/evan/Desktop/EvanWorkspace/C++/Tips/logging_with_spdlog/logger/build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -123,6 +123,19 @@ spdexam/fast:
 	$(MAKE) -f CMakeFiles/spdexam.dir/build.make CMakeFiles/spdexam.dir/build
 .PHONY : spdexam/fast
 
+#=============================================================================
+# Target rules for targets named loggeragent
+
+# Build rule for target.
+loggeragent: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 loggeragent
+.PHONY : loggeragent
+
+# fast build rule for target.
+loggeragent/fast:
+	$(MAKE) -f CMakeFiles/loggeragent.dir/build.make CMakeFiles/loggeragent.dir/build
+.PHONY : loggeragent/fast
+
 Logger.o: Logger.cpp.o
 
 .PHONY : Logger.o
@@ -149,6 +162,33 @@ Logger.s: Logger.cpp.s
 Logger.cpp.s:
 	$(MAKE) -f CMakeFiles/spdexam.dir/build.make CMakeFiles/spdexam.dir/Logger.cpp.s
 .PHONY : Logger.cpp.s
+
+LoggerAgent.o: LoggerAgent.cpp.o
+
+.PHONY : LoggerAgent.o
+
+# target to build an object file
+LoggerAgent.cpp.o:
+	$(MAKE) -f CMakeFiles/loggeragent.dir/build.make CMakeFiles/loggeragent.dir/LoggerAgent.cpp.o
+.PHONY : LoggerAgent.cpp.o
+
+LoggerAgent.i: LoggerAgent.cpp.i
+
+.PHONY : LoggerAgent.i
+
+# target to preprocess a source file
+LoggerAgent.cpp.i:
+	$(MAKE) -f CMakeFiles/loggeragent.dir/build.make CMakeFiles/loggeragent.dir/LoggerAgent.cpp.i
+.PHONY : LoggerAgent.cpp.i
+
+LoggerAgent.s: LoggerAgent.cpp.s
+
+.PHONY : LoggerAgent.s
+
+# target to generate assembly for a file
+LoggerAgent.cpp.s:
+	$(MAKE) -f CMakeFiles/loggeragent.dir/build.make CMakeFiles/loggeragent.dir/LoggerAgent.cpp.s
+.PHONY : LoggerAgent.cpp.s
 
 Main.o: Main.cpp.o
 
@@ -184,11 +224,15 @@ help:
 	@echo "... clean"
 	@echo "... depend"
 	@echo "... edit_cache"
-	@echo "... rebuild_cache"
 	@echo "... spdexam"
+	@echo "... loggeragent"
+	@echo "... rebuild_cache"
 	@echo "... Logger.o"
 	@echo "... Logger.i"
 	@echo "... Logger.s"
+	@echo "... LoggerAgent.o"
+	@echo "... LoggerAgent.i"
+	@echo "... LoggerAgent.s"
 	@echo "... Main.o"
 	@echo "... Main.i"
 	@echo "... Main.s"
